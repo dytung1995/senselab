@@ -130,6 +130,7 @@ function rt(T,w){if(w)T=fr(T.slice());let o='',run='';const fl=()=>{o+=tx(run);r
  fl();return o}
 const FR=(s,w)=>rt(tk(s.replace('hằng số','§')),w);
 const fm=h=>h.replace(/<code>([\s\S]*?)<\/code>/g,(m,a)=>`<span class='fm'>${FR(a,true)}</span>`);
+const PT={};
 const OPT={mendel:{g1:{l:'Kiểu gen của bố/mẹ 1',o:['AA','Aa','aa']},g2:{l:'Kiểu gen của bố/mẹ 2',o:['AA','Aa','aa']}},
  lens:{kind:{l:'Loại thấu kính',o:['Hội tụ','Phân kỳ']}},
  ohm:{mode:{l:'Kiểu mắc',o:['Nối tiếp','Song song']}},
@@ -597,7 +598,513 @@ balance:{name:'⚖️ Cân dòng điện',nog:true,
   else if(p.m<0){const px=cx0-.7*Lb*c,py=cy0+.7*Lb*sn;ln(px,py,px,py+20,FG,2);ln(px-28,py+20,px+28,py+20,FG,4);blk(px,py+20+4,Math.abs(p.m)+' mg',bs)}
   cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Dây trên I₂ (gắn vào đòn cân)',lx+40,uy-14);cx.fillText('Dây dưới I₁ (cố định)',lwx+40,lwy+4);
   if(Math.abs(net)<1e-5){cx.fillStyle=col('--grn');cx.font='bold 18px system-ui';cx.textAlign='center';cx.fillText('CÂN BẰNG',cx0,34);cx.textAlign='left'}}}
+,
+
+fric:{name:'🧱 Lực ma sát',tw:()=>20,
+ desc:'Vật khối lượng m trên mặt phẳng ngang chịu áp lực <code>N = mg</code>. Khi kéo bằng lực F: nếu <code>F ≤ μ_s·N</code> vật đứng yên và ma sát nghỉ bằng đúng F; khi <code>F > μ_s·N</code> vật trượt, ma sát trượt không đổi <code>F_ms = μ_k·N</code> (μ_k < μ_s) và gia tốc <code>a = (F − μ_k·N)/m</code>. Bật chế độ tăng lực tự động để thấy ma sát nghỉ tăng dần rồi tụt xuống khi vật bắt đầu trượt.',
+ params:[['m','Khối lượng m (kg)',1,20,.5,5],['mus','Hệ số ma sát nghỉ μ_s',.1,1,.05,.5],['muk','Hệ số ma sát trượt μ_k',.05,1,.05,.3],['F','Lực kéo F (N); khi tăng dần là giá trị tối đa',0,100,1,60],['ramp','Lực kéo',0,1,1,1]],
+ gl:'Lực kéo F (xanh dương) và lực ma sát (đỏ), đơn vị N',
+ reset(p){return{t:0,x:0,v:0,Fa:0,fr:0}},
+ step(s,p,dt){const N=p.m*9.81,mk=Math.min(p.muk,p.mus);s.t+=dt;s.Fa=p.ramp?p.F*Math.min(1,s.t/15):p.F;if(s.v==0&&s.Fa<=p.mus*N){s.fr=s.Fa}else{s.fr=mk*N;s.v+=(s.Fa-s.fr)/p.m*dt;if(s.v<=0){s.v=0;s.fr=Math.min(s.Fa,p.mus*N)}}s.x+=s.v*dt},
+ val:s=>[s.Fa,s.fr],
+ info(s,p){const N=p.m*9.81;return[['Áp lực N = mg',f(N,1)+' N'],['Ma sát nghỉ cực đại μ_s·N',f(p.mus*N,1)+' N'],['Ma sát trượt μ_k·N',f(Math.min(p.muk,p.mus)*N,1)+' N'],['Lực kéo F',f(s.Fa,1)+' N'],['Lực ma sát hiện tại',f(s.fr,1)+' N'],['Vận tốc',f(s.v,2)+' m/s'],['Trạng thái',s.v>0?'Trượt (ma sát trượt)':'Đứng yên (ma sát nghỉ)']]},
+ draw(s,p){const gy=H*.62,bw=100,bh=64,bx=W*.4-bw/2;ln(0,gy,W,gy,col('--mute'),3);for(let i=-1;i<W/40+2;i++){const x=i*40-(s.x*40)%40;ln(x,gy,x-8,gy+12,col('--mute'),2)}
+  cx.fillStyle=col('--acc');cx.fillRect(bx,gy-bh,bw,bh);cx.strokeStyle=col('--fg');cx.lineWidth=2;cx.strokeRect(bx,gy-bh,bw,bh);cx.fillStyle='#fff';cx.font='bold 16px system-ui';cx.textAlign='center';cx.fillText(p.m+' kg',bx+bw/2,gy-bh/2+6);cx.textAlign='left';
+  const L1=Math.min(220,s.Fa*2.4),L2=Math.min(220,s.fr*2.4),y1=gy-bh/2;
+  if(L1>1){ln(bx+bw,y1,bx+bw+L1,y1,'#2563eb',4);ah(bx+bw+L1,y1,0,13,'#2563eb');cx.fillStyle='#2563eb';cx.font='bold 14px system-ui';cx.fillText('F = '+f(s.Fa,1)+' N',bx+bw+8,y1-10)}
+  if(L2>1){ln(bx,y1+14,bx-L2,y1+14,'#dc2626',4);ah(bx-L2,y1+14,Math.PI,13,'#dc2626');cx.fillStyle='#dc2626';cx.font='bold 14px system-ui';mt(cx,'F_ms = '+f(s.fr,1)+' N',Math.max(4,bx-L2),y1+36)}
+  cx.fillStyle=col('--mute');cx.font='13px system-ui';cx.fillText(s.v>0?'Vật đang trượt – ma sát trượt':'Vật đứng yên – ma sát nghỉ',10,22)}},
+
+incl:{name:'📐 Mặt phẳng nghiêng',nog:true,
+ desc:'Vật trên mặt phẳng nghiêng góc θ chịu trọng lực <code>P = mg</code> phân tích thành <code>P_x = mg·sinθ</code> (kéo xuống dọc mặt phẳng) và <code>P_y = mg·cosθ</code> (ép vuông góc, cân bằng với phản lực <code>N = mg·cosθ</code>). Ma sát <code>F_ms = μN</code>. Vật trượt khi <code>tanθ > μ</code> với gia tốc <code>a = g(sinθ − μ·cosθ)</code>, ngược lại vật đứng yên.',
+ params:[['th','Góc nghiêng θ (°)',0,70,1,30],['mu','Hệ số ma sát μ',0,1,.05,.3],['m','Khối lượng m (kg)',1,10,.5,2]],
+ acc(p){const t=rad(p.th),a=9.81*(Math.sin(t)-p.mu*Math.cos(t));return a>0?a:0},
+ reset(p){return{t:0,s:0,v:0}},
+ step(s,p,dt){s.t+=dt;s.v+=EX.incl.acc(p)*dt;s.s+=s.v*dt;if(s.s>4.5){s.s=0;s.v=0}},
+ val:()=>0,
+ info(s,p){const t=rad(p.th),g=p.m*9.81,N=g*Math.cos(t),Px=g*Math.sin(t),Ff=p.mu*N;return[['Trọng lực P = mg',f(g,1)+' N'],['P_x = mg·sinθ',f(Px,1)+' N'],['N = P_y = mg·cosθ',f(N,1)+' N'],['Ma sát cực đại μN',f(Ff,1)+' N'],['Gia tốc a',f(EX.incl.acc(p),2)+' m/s²'],['Góc ma sát arctanμ',f(Math.atan(p.mu)*180/Math.PI,1)+'°'],['Trạng thái',Px>Ff?'Trượt xuống':'Đứng yên (tanθ ≤ μ)'],['Vận tốc',f(s.v,2)+' m/s']]},
+ draw(s,p){const t=rad(p.th),c=Math.cos(t),sn=Math.sin(t),gy=H-40,Lpx=Math.min(W*.62/Math.max(c,.3),(H-110)/Math.max(sn,.2)),sc=Lpx/5,xr=W*.75,tp=[xr-Lpx*c,gy-Lpx*sn];
+  cx.fillStyle=col('--line');cx.beginPath();cx.moveTo(tp[0],tp[1]);cx.lineTo(xr,gy);cx.lineTo(tp[0],gy);cx.closePath();cx.fill();ln(tp[0],tp[1],xr,gy,col('--fg'),3);ln(0,gy,W,gy,col('--mute'),2);
+  const nx=sn,ny=-c,pos=[tp[0]+s.s*sc*c,tp[1]+s.s*sc*sn],ct=[pos[0]+nx*30,pos[1]+ny*30];
+  cx.save();cx.translate(ct[0],ct[1]);cx.rotate(t);cx.fillStyle=col('--acc');cx.fillRect(-45,-30,90,60);cx.fillStyle='#fff';cx.font='bold 14px system-ui';cx.textAlign='center';cx.fillText(p.m+' kg',0,5);cx.restore();cx.textAlign='left';
+  const g=p.m*9.81,Px=g*sn,Pn=g*c,Ff=Math.min(Px,p.mu*Pn),lo=F=>Math.min(130,F*2.2),ar=(dx,dy,L,k,tx)=>{ln(ct[0],ct[1],ct[0]+dx*L,ct[1]+dy*L,k,3);ah(ct[0]+dx*L,ct[1]+dy*L,Math.atan2(dy,dx),10,k);cx.fillStyle=k;cx.font='bold 13px system-ui';mt(cx,tx,ct[0]+dx*L+6,ct[1]+dy*L+4)};
+  ar(0,1,lo(g),'#dc2626','P');ar(nx,ny,lo(Pn),'#059669','N');cx.setLineDash([4,4]);ar(c,sn,lo(Px),'#d97706','P_x');ar(-nx,-ny,lo(Pn),'#d97706','P_y');cx.setLineDash([]);if(Ff>.05)ar(-c,-sn,lo(Ff),'#2563eb','F_ms');
+  cx.strokeStyle=col('--fg');cx.lineWidth=1.5;cx.beginPath();cx.arc(xr,gy,50,Math.PI,Math.PI+t);cx.stroke();cx.fillStyle=col('--fg');cx.font='14px system-ui';cx.fillText('θ = '+p.th+'°',xr-110,gy-8)}},
+
+mom:{name:'🎱 Bảo toàn động lượng',tw:()=>12,
+ desc:'Trong hệ kín (không có ngoại lực) tổng động lượng được bảo toàn: <code>m₁v₁ + m₂v₂ = m₁v′₁ + m₂v′₂</code>. Va chạm đàn hồi (e = 1) bảo toàn cả động năng; va chạm mềm (e = 0) hai vật dính nhau cùng vận tốc và mất nhiều động năng nhất. Hệ số khôi phục <code>e = −{v′₂ − v′₁|v₂ − v₁}</code>.',
+ params:[['m1','Khối lượng vật 1 m₁ (kg)',.5,5,.5,2],['m2','Khối lượng vật 2 m₂ (kg)',.5,5,.5,1],['v1','Vận tốc vật 1 v₁ (m/s)',-6,6,.5,3],['v2','Vận tốc vật 2 v₂ (m/s)',-6,6,.5,-1],['e','Hệ số khôi phục e (0 = mềm, 1 = đàn hồi)',0,1,.05,1]],
+ gl:'Tổng động lượng p (xanh dương, kg·m/s) và tổng động năng K (đỏ, J)',
+ reset(p){const pt=p.m1*p.v1+p.m2*p.v2,k=.5*p.m1*p.v1*p.v1+.5*p.m2*p.v2*p.v2;return{t:0,x1:-5,x2:5,v1:p.v1,v2:p.v2,hit:false,pb:pt,kb:k,pt,k}},
+ step(s,p,dt){s.t+=dt;s.x1+=s.v1*dt;s.x2+=s.v2*dt;if(!s.hit&&s.x2-s.x1<=1&&s.v1>s.v2){const M=p.m1+p.m2,a=s.v1,b=s.v2;s.v1=((p.m1-p.e*p.m2)*a+(1+p.e)*p.m2*b)/M;s.v2=((p.m2-p.e*p.m1)*b+(1+p.e)*p.m1*a)/M;s.hit=true}s.pt=p.m1*s.v1+p.m2*s.v2;s.k=.5*p.m1*s.v1*s.v1+.5*p.m2*s.v2*s.v2},
+ val:s=>[s.pt,s.k],
+ info(s,p){return[['Trạng thái',s.hit?'Đã va chạm':p.v1>p.v2?'Chưa va chạm':'Không va chạm (v₁ ≤ v₂)'],['Động lượng trước va chạm',f(s.pb,2)+' kg·m/s'],['Động lượng hiện tại',f(s.pt,2)+' kg·m/s'],['Động năng trước',f(s.kb,2)+' J'],['Động năng hiện tại',f(s.k,2)+' J'],['Động năng mất đi',f(s.kb-s.k,2)+' J'],['v₁ / v₂',f(s.v1,2)+' / '+f(s.v2,2)+' m/s']]},
+ draw(s,p){const gy=H*.62,sc=(W-60)/18,X=x=>W/2+x*sc,bh=sc*.7;ln(30,gy,W-30,gy,col('--mute'),3);
+  [[s.x1,p.m1,s.v1,col('--acc')],[s.x2,p.m2,s.v2,col('--acc2')]].forEach(([x,m,v,k],i)=>{const px=X(x);cx.fillStyle=k;cx.fillRect(px-sc/2,gy-bh-6,sc,bh);cx.fillStyle=col('--fg');cx.beginPath();cx.arc(px-sc*.28,gy-3,4.5,0,7);cx.arc(px+sc*.28,gy-3,4.5,0,7);cx.fill();cx.fillStyle='#fff';cx.font='bold '+Math.max(10,sc*.3)+'px system-ui';cx.textAlign='center';cx.fillText(m+' kg',px,gy-bh/2-2);cx.textAlign='left';
+   const L=v*16;if(Math.abs(L)>2){const y=gy-bh-24;ln(px,y,px+L,y,'#059669',3);ah(px+L,y,L>0?0:Math.PI,10,'#059669');cx.fillStyle='#059669';cx.font='12px system-ui';cx.fillText('v'+(i+1)+' = '+f(v,2),Math.min(px,px+L),y-8)}});
+  cx.fillStyle=col('--mute');cx.font='13px system-ui';cx.fillText(s.hit?'Đã va chạm (e = '+f(p.e,2)+')':p.v1>p.v2?'Chuẩn bị va chạm':'Hai vật không va chạm (v₁ ≤ v₂)',10,22);cx.fillText('p = '+f(s.pt,2)+' kg·m/s',W-150,22)}},
+
+energy:{name:'🎢 Bảo toàn năng lượng',tw:()=>12,
+ desc:'Quả cầu lăn trong lòng máng parabol: khi không ma sát cơ năng bảo toàn <code>E = ½mv² + mgh = const</code>, động năng và thế năng chuyển hóa qua lại. Khi có ma sát <code>F_ms = μN</code>, cơ năng giảm dần và chuyển thành nhiệt Q: <code>½mv² + mgh + Q = const</code> – năng lượng toàn phần vẫn được bảo toàn.',
+ params:[['m','Khối lượng m (kg)',1,5,.5,2],['h0','Độ cao ban đầu h₀ (m)',1,5,.5,4],['mu','Hệ số ma sát μ',0,.2,.01,0]],
+ gl:'Thế năng (xanh dương), động năng (đỏ), nhiệt Q (xanh lá), tổng (cam), đơn vị J',
+ reset(p){const E=p.m*9.81*p.h0;return{t:0,x:-2*Math.sqrt(p.h0),v:0,Q:0,pe:E,ke:0,E0:E}},
+ step(s,p,dt){const sl=.5*s.x,cs=1/Math.sqrt(1+sl*sl);let a=-9.81*sl*cs;if(p.mu>0){const fr=p.mu*9.81*cs;if(Math.abs(s.v)<1e-3&&Math.abs(a)<=fr){s.v=0;a=0}else a-=fr*Math.sign(s.v||a)}
+  s.v+=a*dt;s.x+=s.v*cs*dt;s.Q+=p.mu*p.m*9.81*cs*Math.abs(s.v)*dt;s.t+=dt;s.pe=p.m*9.81*.25*s.x*s.x;s.ke=.5*p.m*s.v*s.v;s.E0=p.m*9.81*p.h0},
+ val:s=>[s.pe,s.ke,s.Q,s.pe+s.ke+s.Q],
+ info(s,p){return[['Độ cao h',f(.25*s.x*s.x,2)+' m'],['Vận tốc v',f(Math.abs(s.v),2)+' m/s'],['Thế năng mgh',f(s.pe,2)+' J'],['Động năng ½mv²',f(s.ke,2)+' J'],['Nhiệt tỏa ra Q',f(s.Q,2)+' J'],['Cơ năng (thế + động)',f(s.pe+s.ke,2)+' J'],['Năng lượng toàn phần',f(s.pe+s.ke+s.Q,2)+' J']]},
+ draw(s,p){const ox=W*.3,sx=W*.5/12,sy=(H-120)/6.6,X=x=>ox+x*sx,Y=y=>H-44-y*sy;
+  cx.strokeStyle=col('--fg');cx.lineWidth=3;cx.beginPath();for(let i=0;i<=52;i++){const x=-5.2+i*.2,px=X(x),py=Y(.25*x*x);i?cx.lineTo(px,py):cx.moveTo(px,py)}cx.stroke();
+  const sl=.5*s.x,q=Math.sqrt(1+sl*sl),bx=X(s.x)-sl/q*10,by=Y(.25*s.x*s.x)-10/q;cx.fillStyle=col('--acc2');cx.beginPath();cx.arc(bx,by,10,0,7);cx.fill();
+  const E0=s.E0||1,x0=W*.62,bw=W*.36/4,hb=H-120,names=['Thế năng','Động năng','Nhiệt Q','Tổng'],vals=[s.pe,s.ke,s.Q,s.pe+s.ke+s.Q],cols=[col('--acc'),col('--acc2'),col('--grn'),'#d97706'];
+  ln(x0-6,H-44,W-12,H-44,col('--mute'),2);cx.setLineDash([4,4]);ln(x0-6,H-44-hb,W-12,H-44-hb,col('--mute'),1.2);cx.setLineDash([]);
+  vals.forEach((v,i)=>{const h=Math.max(0,Math.min(1.1,v/E0))*hb;cx.fillStyle=cols[i];cx.fillRect(x0+i*bw+4,H-44-h,bw-8,h);cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.textAlign='center';cx.fillText(names[i],x0+i*bw+bw/2,H-28);cx.fillText(f(v,1),x0+i*bw+bw/2,H-44-h-4)});cx.textAlign='left';cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('E₀ = '+f(E0,1)+' J',x0-4,H-44-hb-6)}},
+
+decay:{name:'☢️ Phân rã hạt nhân',tw:()=>30,
+ desc:'Mỗi hạt nhân phân rã ngẫu nhiên với xác suất như nhau trong mỗi đơn vị thời gian, nên số hạt nhân còn lại giảm theo hàm mũ: <code>N = N₀·2^(−t/T)</code> với chu kỳ bán rã T, hằng số phân rã <code>λ = {ln 2|T}</code> và độ phóng xạ <code>H = λN</code>. Sau mỗi chu kỳ bán rã, một nửa số hạt nhân bị phân rã. Với N nhỏ, đường thực nghiệm dao động quanh đường lý thuyết.',
+ params:[['T','Chu kỳ bán rã T (s)',1,10,.5,4],['N0','Số hạt nhân ban đầu N₀',50,400,10,300],['mode','Loại phân rã',0,2,1,0]],
+ gl:'Số hạt nhân chưa phân rã: thực nghiệm (xanh dương), lý thuyết (đỏ)',
+ reset(p){const n=p.N0,c=Math.ceil(Math.sqrt(n*1.8)),ps=[];for(let i=0;i<n;i++)ps.push({a:true,i});return{t:0,n,c,ps,N:n,th:n,pt:[]}},
+ step(s,p,dt){s.t+=dt;const l=Math.LN2/p.T;for(const q of s.ps){if(q.a&&Math.random()<l*dt){q.a=false;s.N--;s.pt.push({i:q.i,a:Math.random()*6.283,l:0})}}s.pt.forEach(q=>{q.l+=dt});s.pt=s.pt.filter(q=>q.l<.9);s.th=s.n*Math.pow(2,-s.t/p.T)},
+ val:s=>[s.N,s.th],
+ info(s,p){return[['Thời gian',f(s.t,1)+' s'],['Hạt nhân chưa phân rã',s.N],['Hạt nhân đã phân rã',s.n-s.N],['Lý thuyết N₀·2^(−t/T)',f(s.th,1)],['Số chu kỳ bán rã đã qua',f(s.t/p.T,2)],['Hằng số phân rã λ',f(Math.LN2/p.T,3)+' s⁻¹'],['Độ phóng xạ H = λN',f(Math.LN2/p.T*s.N,1)+' Bq'],['Hạt phát ra',['Hạt α (He²⁺)','Hạt β⁻ (electron)','Tia γ (photon)'][p.mode]]]},
+ draw(s,p){const c=s.c,rows=Math.ceil(s.n/c),cs=Math.min((W-40)/c,(H-60)/rows),gx=(W-c*cs)/2,gy=34,r=cs*.38,K=['#dc2626','#2563eb','#d97706'][p.mode],pc=i=>[gx+(i%c+.5)*cs,gy+(Math.floor(i/c)+.5)*cs];
+  for(const q of s.ps){const[x,y]=pc(q.i);cx.beginPath();cx.arc(x,y,r,0,7);if(q.a){cx.fillStyle=col('--acc');cx.fill()}else{cx.strokeStyle=col('--line');cx.lineWidth=1.2;cx.stroke()}}
+  for(const q of s.pt){const[x,y]=pc(q.i),d=q.l*60;cx.globalAlpha=1-q.l/.9;if(p.mode==2){cx.strokeStyle=K;cx.lineWidth=2;cx.beginPath();for(let i=0;i<=14;i++){const u=d+i*2,o=4*Math.sin(i*1.4),px=x+Math.cos(q.a)*u-Math.sin(q.a)*o,py=y+Math.sin(q.a)*u+Math.cos(q.a)*o;i?cx.lineTo(px,py):cx.moveTo(px,py)}cx.stroke()}else{cx.fillStyle=K;cx.beginPath();cx.arc(x+Math.cos(q.a)*d,y+Math.sin(q.a)*d,p.mode?2.5:4,0,7);cx.fill()}cx.globalAlpha=1}
+  cx.fillStyle=col('--mute');cx.font='13px system-ui';cx.fillText('● chưa phân rã: '+s.N+'     ○ đã phân rã: '+(s.n-s.N),10,20)}},
+
+bohr:{name:'⚛️ Mô hình nguyên tử Bohr',nog:true,
+ desc:'Electron chuyển động tròn quanh hạt nhân chỉ trên các quỹ đạo có năng lượng xác định: <code>E_n = −{13,6·Z²|n²}</code> (eV), bán kính <code>r_n = a₀·{n²|Z}</code> (a₀ = 0,0529 nm). Khi electron nhảy từ mức cao n_i xuống mức thấp n_f, nguyên tử phát ra photon có năng lượng <code>hf = E_i − E_f</code>, bước sóng <code>λ = {hc|ΔE}</code>. Các dãy vạch: Lyman (về n = 1, tử ngoại), Balmer (về n = 2, nhìn thấy), Paschen (về n = 3, hồng ngoại). Electron tự chuyển mức ngẫu nhiên; các vạch nhìn thấy được ghi lại trên thanh quang phổ.',
+ params:[['Z','Nguyên tử / ion giống hiđro',1,3,1,1],['nmax','Mức kích thích cao nhất n',2,7,1,5]],
+ reset(p){return{t:0,n:Math.min(3,p.nmax),th:0,wait:1,tr:null,pr:0,lines:[],ph:0,last:null}},
+ step(s,p,dt){s.t+=dt;s.th+=2.6/Math.pow(s.n,1.5)*dt;
+  if(s.tr){s.pr+=dt/.7;if(s.pr>=1){s.n=s.tr.to;s.tr=null;s.wait=1.1}}
+  else{s.wait-=dt;if(s.wait<=0){const to=s.n>1?1+Math.floor(Math.random()*(s.n-1)):2+Math.floor(Math.random()*(p.nmax-1)),Z2=13.6*p.Z*p.Z,dE=Math.abs(Z2/(s.n*s.n)-Z2/(to*to)),lam=1239.84/dE,em=to<s.n;
+   s.tr={from:s.n,to,em};s.pr=0;s.last={from:s.n,to,lam,dE,em};if(em&&!s.lines.some(l=>Math.abs(l.lam-lam)<.01))s.lines.push({lam,from:s.n,to});s.ph=1}}
+  if(s.ph>0)s.ph-=dt/1.4},
+ val:()=>0,
+ info(s,p){const Z=p.Z,n=s.n,l=s.last,vis=l?(l.lam>=380&&l.lam<=780?'nhìn thấy':l.lam<380?'tử ngoại':'hồng ngoại'):'',sr=l&&l.em?({1:'Lyman',2:'Balmer',3:'Paschen',4:'Brackett'}[l.to]||'—'):'—';
+  return[['Mức năng lượng n',n],['Năng lượng E_n',f(-13.6*Z*Z/(n*n),2)+' eV'],['Bán kính r_n',f(.0529*n*n/Z,3)+' nm'],['Tốc độ electron',f(2.19*Z/n,2)+' ×10⁶ m/s'],['Chuyển mức',s.tr?(s.tr.em?'Phát xạ ':'Hấp thụ ')+s.tr.from+' → '+s.tr.to:'Ổn định'],['Photon gần nhất',l?f(l.lam,1)+' nm ('+vis+')':'—'],['Dãy vạch',sr],['Số vạch đã ghi',s.lines.length]]},
+ draw(s,p){const ax=W*.28,ay=H*.44,sc=Math.min(18,(H*.34)/p.nmax),R=n=>sc*n+10,Z2=13.6*p.Z*p.Z,FG=col('--fg');
+  for(let n=1;n<=p.nmax;n++){cx.strokeStyle=col('--line');cx.lineWidth=1.5;cx.beginPath();cx.arc(ax,ay,R(n),0,7);cx.stroke()}
+  cx.fillStyle='#dc2626';cx.beginPath();cx.arc(ax,ay,8,0,7);cx.fill();cx.fillStyle='#fff';cx.font='bold 11px system-ui';cx.textAlign='center';cx.fillText('+',ax,ay+4);cx.textAlign='left';
+  const sm=t=>t*t*(3-2*t);let rr=R(s.n);if(s.tr){const e=sm(Math.min(1,s.pr));rr=R(s.tr.from)+(R(s.tr.to)-R(s.tr.from))*e}
+  cx.fillStyle='#2563eb';cx.beginPath();cx.arc(ax+rr*Math.cos(s.th),ay+rr*Math.sin(s.th),5.5,0,7);cx.fill();
+  const ph=s.last,vis=ph&&ph.lam>=380&&ph.lam<=780,kc=ph?(vis?'rgb('+rgb(ph.lam).join(',')+')':'#9ca3af'):'#9ca3af';
+  if(ph&&s.ph>0){const u=1-s.ph,a=ph.em?-.55:Math.PI+.55,D=R(p.nmax)+20+(ph.em?u:1-u)*(W*.2),sg=ph.em?-1:1,px=ax+D*Math.cos(a),py=ay+D*Math.sin(a);cx.globalAlpha=Math.min(1,s.ph*2);cx.strokeStyle=kc;cx.lineWidth=3;cx.beginPath();for(let i=0;i<=40;i++){const d=i*2,off=7*Math.sin(d/3.2+(ph.em?-1:1)*s.t*14),x=px+sg*Math.cos(a)*d-Math.sin(a)*off,y=py+sg*Math.sin(a)*d+Math.cos(a)*off;i?cx.lineTo(x,y):cx.moveTo(x,y)}cx.stroke();cx.fillStyle=kc;cx.font='bold 13px system-ui';cx.fillText(f(ph.lam,0)+' nm',px+8,py-8);cx.globalAlpha=1}
+  const dx0=W*.6,dx1=W*.93,Y=n=>H-70-(H-120)*(1-1/(n*n));cx.font='11px system-ui';
+  for(let n=1;n<=7;n++){const on=n<=p.nmax;ln(dx0,Y(n),dx1,Y(n),col(on?'--fg':'--line'),on?2:1);cx.fillStyle=col('--mute');cx.fillText('n='+n,dx0-30,Y(n)+4);if(n<=3)cx.fillText(f(-Z2/(n*n),2)+' eV',dx1-62,Y(n)-4)}
+  let ye=Y(s.n);if(s.tr){const e=sm(Math.min(1,s.pr));ye=Y(s.tr.from)+(Y(s.tr.to)-Y(s.tr.from))*e;ln((dx0+dx1)/2+40,Y(s.tr.from),(dx0+dx1)/2+40,ye,kc,3);ah((dx0+dx1)/2+40,ye,s.tr.to<s.tr.from?Math.PI/2:-Math.PI/2,9,kc)}
+  cx.fillStyle='#2563eb';cx.beginPath();cx.arc((dx0+dx1)/2-20,ye,6,0,7);cx.fill();
+  const sx0=20,sx1=W-20,sy=H-34,sw=sx1-sx0;for(let i=0;i<sw;i+=2){const l=380+370*i/sw;cx.fillStyle='rgb('+rgb(l).join(',')+')';cx.fillRect(sx0+i,sy,2,14)}
+  s.lines.forEach(l=>{if(l.lam>=380&&l.lam<=750)ln(sx0+(l.lam-380)/370*sw,sy-3,sx0+(l.lam-380)/370*sw,sy+17,'#000',2)});
+  cx.fillStyle=col('--mute');cx.fillText('380 nm',sx0,sy-6);cx.fillText('750 nm',sx1-40,sy-6);cx.fillText('Quang phổ vạch (vùng nhìn thấy) – vạch đen là photon đã phát',sx0+70,sy-6)}},
+
+ruth:{name:'🎯 Mô hình Rutherford',nog:true,
+ desc:'Thí nghiệm bắn hạt α vào lá vàng. Mô hình Thomson (khối điện tích dương trải đều) chỉ cho lệch rất nhỏ; thực nghiệm cho thấy một số ít hạt α bị lệch góc lớn, thậm chí bật ngược, nên Rutherford đề xuất hạt nhân nhỏ, đặc, mang điện dương ở tâm nguyên tử. Góc lệch liên hệ với thông số va chạm b: <code>tan(θ/2) = d/(2b)</code>, với khoảng tiến gần nhất khi đối đầu <code>d = {Z₁Z₂e²|4πε₀E}</code>. Mô phỏng dùng một hạt nhân duy nhất và chùm tia rộng ±120 fm nên tỉ lệ bật ngược cao hơn thực tế.',
+ params:[['Z','Điện tích hạt nhân Z (vàng: 79)',10,100,1,79],['E','Năng lượng hạt α (MeV)',2,10,.5,5],['mode','Mô hình nguyên tử',0,1,1,1]],
+ reset(p){return{t:0,ps:[],cnt:[0,0,0,0,0],n:0,sp:0}},
+ step(s,p,dt){s.t+=dt;const dfm=2.88*p.Z/p.E,dpx=H*.42/120*dfm,bm=120/dfm,v0=350/dpx,xl=-W*.4/dpx,xr=W*.6/dpx,yb=H*.5/dpx;s.sp+=dt*10;
+  while(s.sp>=1){s.sp--;s.ps.push({x:xl,y:(Math.random()*2-1)*bm,vx:v0,vy:p.mode?0:(Math.random()-.5)*v0*.03,tr:[],lt:0})}
+  const k=Math.max(1,Math.ceil(v0*dt/.1)),h=dt/k;
+  for(const q of s.ps){for(let j=0;j<k;j++){if(p.mode==1){const r2=Math.max(q.x*q.x+q.y*q.y,.04),r=Math.sqrt(r2),a=.5*v0*v0/r2;q.vx+=a*q.x/r*h;q.vy+=a*q.y/r*h}q.x+=q.vx*h;q.y+=q.vy*h}
+   q.lt+=dt;if(q.lt>.025){q.lt=0;q.tr.push([W*.4+q.x*dpx,H/2+q.y*dpx]);if(q.tr.length>90)q.tr.shift()}
+   if(q.x>xr||q.x<xl-.5||Math.abs(q.y)>yb){q.dead=true;const th=Math.abs(Math.atan2(q.vy,q.vx))*180/Math.PI;s.n++;s.cnt[th<5?0:th<20?1:th<45?2:th<90?3:4]++}}
+  s.ps=s.ps.filter(q=>!q.dead)},
+ val:()=>0,
+ info(s,p){const n=Math.max(1,s.n),c=s.cnt;return[['Khoảng tiến gần nhất d',f(2.88*p.Z/p.E,1)+' fm'],['Hạt α đã đi qua',s.n],['Lệch trên 20°',f((c[2]+c[3]+c[4])/n*100,1)+'%'],['Lệch trên 90° (bật ngược)',c[4]+' ('+f(c[4]/n*100,1)+'%)'],['Mô hình',p.mode?'Rutherford (hạt nhân)':'Thomson (khối đều)'],['Kết luận',p.mode?'Có hạt bật ngược → hạt nhân nhỏ, đặc':'Chỉ lệch rất nhỏ, trái thực nghiệm']]},
+ draw(s,p){const cxn=W*.4,cyn=H/2,dfm=2.88*p.Z/p.E,dpx=H*.42/120*dfm,R=H*.42;
+  if(p.mode==0){cx.fillStyle='rgba(244,114,182,.22)';cx.beginPath();cx.arc(cxn,cyn,R,0,7);cx.fill();cx.fillStyle='#2563eb';for(let i=0;i<9;i++){const a=i*2.4,r=R*(.25+.6*((i*5)%7)/7);cx.beginPath();cx.arc(cxn+r*Math.cos(a),cyn+r*Math.sin(a),3,0,7);cx.fill()}}
+  else{cx.setLineDash([4,5]);cx.strokeStyle=col('--mute');cx.lineWidth=1;cx.beginPath();cx.arc(cxn,cyn,R,0,7);cx.stroke();cx.setLineDash([]);cx.fillStyle='#dc2626';cx.beginPath();cx.arc(cxn,cyn,5,0,7);cx.fill()}
+  cx.strokeStyle=col('--acc');cx.lineWidth=1.6;cx.globalAlpha=.7;for(const q of s.ps){cx.beginPath();q.tr.forEach(([x,y],i)=>i?cx.lineTo(x,y):cx.moveTo(x,y));cx.stroke()}cx.globalAlpha=1;
+  cx.fillStyle=col('--acc2');for(const q of s.ps){cx.beginPath();cx.arc(cxn+q.x*dpx,cyn+q.y*dpx,3.5,0,7);cx.fill()}
+  const hx=W*.74,hw=W*.24,names=['<5°','5–20°','20–45°','45–90°','>90°'],mx=Math.log10(1+Math.max(1,...s.cnt)),bh=H*.5,hy=H*.78,bw=hw/5;
+  ln(hx-4,hy,hx+hw,hy,col('--mute'),2);s.cnt.forEach((c,i)=>{const h=Math.log10(1+c)/mx*bh;cx.fillStyle=i==4?col('--acc2'):col('--acc');cx.fillRect(hx+i*bw+3,hy-h,bw-6,h);cx.fillStyle=col('--mute');cx.font='10px system-ui';cx.textAlign='center';cx.fillText(names[i],hx+i*bw+bw/2,hy+13);cx.fillText(c,hx+i*bw+bw/2,hy-h-4)});cx.textAlign='left';
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Số hạt theo góc lệch (thang log)',hx-4,hy-bh-14);cx.fillText(p.mode?'Hạt nhân đặc ở tâm (chấm đỏ)':'Khối điện tích dương trải đều (màu hồng)',10,H-12)}},
+
+ptable:{name:'🗂️ Bảng tuần hoàn các nguyên tố',...ST,
+ desc:'Bảng tuần hoàn gồm 118 nguyên tố xếp theo số hiệu nguyên tử Z tăng dần: mỗi hàng là một chu kỳ, mỗi cột là một nhóm có tính chất tương tự. Bấm vào ô nguyên tố (hoặc kéo thanh trượt Z) để xem khối lượng, cấu hình electron, nhóm, chu kỳ và loại nguyên tố; di chuột để làm nổi bật cả nhóm cùng loại.',
+ params:[['Z','Chọn nguyên tố (số hiệu Z)',1,118,1,26],['mode','Tô màu theo',0,1,1,0]],
+ reset(p){return{t:0,sel:p.Z}},
+ info(s,p){const z=s.sel,[r,c]=pz(z);return[['Nguyên tố',NM[z-1]+' ('+SY[z-1]+')'],['Số hiệu nguyên tử Z',z],['Khối lượng nguyên tử',massStr(z)],['Cấu hình electron',econf(z)],['Chu kỳ / Nhóm',(r>=8?(r==8?6:7):r+1)+' / '+(r>=8?'f':c+1)],['Loại',CATN[catOf(z)]],['Trạng thái (nhiệt độ phòng)',STN[stOf(z)]],['Proton / nơtron (xấp xỉ)',z+' / '+(Math.round(MS[z-1])-z)]]},
+ draw(s,p){const cs=Math.min((W-16)/18,(H-20)/10.4),x0=(W-18*cs)/2,y0=8,Xc=c=>x0+c*cs,Yr=r=>y0+(r<8?r:r+.4)*cs,z0=s.sel,fs=cs*.36;
+  PT.hit=(mx,my)=>{for(let z=1;z<=118;z++){const[r,c]=pz(z);if(mx>=Xc(c)&&mx<Xc(c)+cs&&my>=Yr(r)&&my<Yr(r)+cs)return z}return 0};
+  const hv=mp?PT.hit(mp[0],mp[1]):0,kc=z=>p.mode?STC[stOf(z)]:CATC[catOf(z)];
+  for(let z=1;z<=118;z++){const[r,c]=pz(z),x=Xc(c),y=Yr(r);cx.fillStyle=kc(z);cx.globalAlpha=(hv&&!p.mode&&catOf(hv)!=catOf(z))?.3:1;cx.fillRect(x+1,y+1,cs-2,cs-2);cx.globalAlpha=1;
+   if(z==z0||z==hv){cx.strokeStyle=col('--fg');cx.lineWidth=z==z0?3:2;cx.strokeRect(x+1,y+1,cs-2,cs-2)}
+   cx.fillStyle='#fff';cx.textAlign='center';cx.font='bold '+fs+'px system-ui';cx.fillText(SY[z-1],x+cs/2,y+cs*.64);if(cs>=26){cx.font=(cs*.2)+'px system-ui';cx.fillText(z,x+cs/2,y+cs*.26)}}
+  if(!p.mode)[[5,57,'57–71',7],[6,89,'89–103',8]].forEach(([r,z,t,ci])=>{cx.globalAlpha=.5;cx.fillStyle=CATC[ci];cx.fillRect(Xc(2)+1,Yr(r)+1,cs-2,cs-2);cx.globalAlpha=1;cx.fillStyle='#fff';cx.font=(cs*.22)+'px system-ui';cx.textAlign='center';cx.fillText(t,Xc(2)+cs/2,Yr(r)+cs*.58)});
+  const cx1=Xc(2)+6,cy1=Yr(0)+2,cw=9*cs-12,ch=3*cs-6,bs=ch-12;cx.fillStyle=col('--card');cx.fillRect(cx1,cy1,cw,ch);cx.strokeStyle=col('--line');cx.lineWidth=1.5;cx.strokeRect(cx1,cy1,cw,ch);
+  cx.fillStyle=kc(z0);cx.fillRect(cx1+6,cy1+6,bs,bs);cx.fillStyle='#fff';cx.textAlign='center';cx.font=(bs*.2)+'px system-ui';cx.fillText(z0,cx1+6+bs/2,cy1+6+bs*.24);cx.font='bold '+(bs*.48)+'px system-ui';cx.fillText(SY[z0-1],cx1+6+bs/2,cy1+6+bs*.66);cx.font=Math.max(8,bs*.16)+'px system-ui';cx.fillText(NM[z0-1],cx1+6+bs/2,cy1+6+bs*.9);
+  cx.textAlign='left';cx.fillStyle=col('--fg');cx.font='bold '+Math.max(11,cs*.3)+'px system-ui';cx.fillText(NM[z0-1]+' ('+SY[z0-1]+')',cx1+bs+16,cy1+cs*.55);cx.font=Math.max(10,cs*.25)+'px system-ui';cx.fillStyle=col('--mute');cx.fillText('Khối lượng: '+massStr(z0),cx1+bs+16,cy1+cs*1.1);cx.fillText(econf(z0),cx1+bs+16,cy1+cs*1.6);cx.fillText(CATN[catOf(z0)],cx1+bs+16,cy1+cs*2.1);
+  const it=p.mode?STN:CATS,cl=p.mode?STC:CATC,per=p.mode?4:5;it.forEach((t,i)=>{const lx=Xc(2)+(i%per)*3.2*cs,ly=Yr(7)+.1*cs+Math.floor(i/per)*.5*cs;cx.fillStyle=cl[i];cx.fillRect(lx,ly,cs*.32,cs*.32);cx.fillStyle=col('--mute');cx.font=Math.max(9,cs*.24)+'px system-ui';cx.fillText(t,lx+cs*.4,ly+cs*.26)})}}
 };
+
+// ===== 3D engine & molecule builder =====
+const V3={yaw:.7,pitch:-.35};
+const mixc=(h,t,w)=>{const n=parseInt(h.slice(1),16),m=w?255:0;return 'rgb('+[(n>>16)&255,(n>>8)&255,n&255].map(v=>Math.round(v+(m-v)*t)).join(',')+')'};
+function P3(x,y,z,o){const c1=Math.cos(o.yaw),s1=Math.sin(o.yaw),c2=Math.cos(o.pitch),s2=Math.sin(o.pitch),x1=x*c1+z*s1,z1=-x*s1+z*c1,y1=y*c2-z1*s2,z2=y*s2+z1*c2,f=1/(1-z2*o.k);return[o.cx+x1*o.sc*f,o.cy-y1*o.sc*f,z2,f]}
+function sph(x,y,r,k){const g=cx.createRadialGradient(x-r*.35,y-r*.35,r*.1,x,y,r);g.addColorStop(0,mixc(k,.6,true));g.addColorStop(.55,k);g.addColorStop(1,mixc(k,.4,false));cx.fillStyle=g;cx.beginPath();cx.arc(x,y,r,0,7);cx.fill()}
+const EC={H:'#e5e7eb',C:'#4b5563',N:'#2563eb',O:'#dc2626',S:'#eab308',R:'#22c55e'},EV={H:1,C:1.45,N:1.3,O:1.3,S:1.5,R:1.8},EB={H:.27,C:.38,N:.38,O:.36,S:.5,R:.65};
+const va=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],vs=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],vm=(a,k)=>[a[0]*k,a[1]*k,a[2]*k],vd=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],vc=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],vl=a=>Math.hypot(a[0],a[1],a[2]),vn=a=>{const l=vl(a)||1;return[a[0]/l,a[1]/l,a[2]/l]};
+const perp=u=>{const t=Math.abs(u[0])<.9?[1,0,0]:[0,1,0];return vn(vs(t,vm(u,vd(t,u))))};
+const mxv=(R,p)=>[vd(R[0],p),vd(R[1],p),vd(R[2],p)],mxm=(A,B)=>A.map(r=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));
+function rotAx(k,t){const c=Math.cos(t),s=Math.sin(t),x=k[0],y=k[1],z=k[2],q=1-c;return[[c+x*x*q,x*y*q-z*s,x*z*q+y*s],[y*x*q+z*s,c+y*y*q,y*z*q-x*s],[z*x*q-y*s,z*y*q+x*s,c+z*z*q]]}
+function alignV(a,b){const v=vc(a,b),c=vd(a,b),s=vl(v);if(s<1e-8)return c>0?[[1,0,0],[0,1,0],[0,0,1]]:rotAx(perp(a),Math.PI);return rotAx(vn(v),Math.atan2(s,c))}
+const VAL={C:4,N:3,O:2,S:2,H:1};
+function parseS(sm,extra){const A=[],B=[],st=[],rg={};let prev=-1,ord=1;
+ for(const ch of sm){if(ch=='(')st.push(prev);else if(ch==')')prev=st.pop();else if(ch=='=')ord=2;else if(ch=='#')ord=3;
+  else if(ch>='0'&&ch<='9'){if(rg[ch]!=null){B.push([rg[ch],prev,1.5]);delete rg[ch]}else rg[ch]=prev}
+  else{const ar=ch>='a'&&ch<='z',id=A.length;A.push({e:ch.toUpperCase(),ar});if(prev>=0)B.push([prev,id,ar&&A[prev].ar?1.5:ord]);prev=id;ord=1}}
+ const use=A.map((a,i)=>(extra&&extra[i])||0);B.forEach(([i,j,o])=>{use[i]+=o;use[j]+=o});
+ const n0=A.length;for(let i=0;i<n0;i++){const nh=Math.round(VAL[A[i].e]-use[i]);for(let k=0;k<nh;k++){A.push({e:'H'});B.push([i,A.length-1,1])}}
+ return{A,B}}
+function hybs(A,adj){const mx=A.map((a,i)=>Math.max(0,...adj[i].map(x=>x[1])));return A.map((a,i)=>{if(mx[i]>=3)return'sp';if(mx[i]>=2||a.ar)return'sp2';if(a.e=='N'||a.e=='O')return adj[i].some(([j])=>mx[j]>=1.5)?'sp2':'sp3';return'sp3'})}
+function blen(A,C,i,j,o){const k=[A[i].e,A[j].e].sort().join('');if(k=='CH')return 1.09;if(k=='HO')return .96;if(k=='HN')return 1.01;if(k=='CC')return o==3?1.2:o==2?1.34:o==1.5?1.4:(C.hy[i]!='sp3'&&C.hy[j]!='sp3'?1.47:1.53);if(k=='CO')return o==2?1.21:(C.hy[i]=='sp2'||C.hy[j]=='sp2')?1.36:1.43;if(k=='CN')return o==2?1.28:(C.hy[i]=='sp2'||C.hy[j]=='sp2')?1.4:1.47;return 1.5}
+function grow(C,i,u,ref,root){const A=C.A,kids=C.adj[i].filter(([j])=>!C.done.has(j)).sort((a,b)=>(A[a[0]].e=='H')-(A[b[0]].e=='H'));if(!kids.length)return;
+ const h=C.hy[i],dirs=[],w=vc(u,ref);
+ const around=(th,ph0,n)=>{for(let k=0;k<n;k++){const ph=ph0+k*2*Math.PI/n;dirs.push(vn(va(vm(u,Math.cos(th)),vm(va(vm(ref,Math.cos(ph)),vm(w,Math.sin(ph))),Math.sin(th)))))}};
+ if(h=='sp3')around(1.911,root?0:Math.PI/3,3);else if(h=='sp2')around(2.094,Math.PI,2);else dirs.push(vm(u,-1));
+ if(root)dirs.unshift(u);
+ kids.forEach(([j,o],k)=>{const d=dirs[k]||dirs[dirs.length-1];C.pos[j]=va(C.pos[i],vm(d,blen(A,C,i,j,o)));C.done.add(j);const nu=vm(d,-1),nr=vn(vs(u,vm(d,vd(u,d))));grow(C,j,nu,vl(vs(u,vm(d,vd(u,d))))>.05?nr:perp(nu),false)})}
+function ctx(A,B){const adj=A.map(()=>[]);B.forEach(([i,j,o])=>{adj[i].push([j,o]);adj[j].push([i,o])});const C={A,adj,pos:A.map(()=>null),done:new Set([0])};C.hy=hybs(A,adj);return C}
+function fin(m){const n=m.a.length;let c=[0,0,0];m.a.forEach(a=>{c=va(c,a.p)});c=vm(c,1/n);m.c=c;m.R=Math.max(...m.a.map(a=>vl(vs(a.p,c))));const ar=m.b.filter(b=>b[2]==1.5);if(ar.length){const s=new Set();ar.forEach(b=>{s.add(b[0]);s.add(b[1])});let rc=[0,0,0];s.forEach(i=>{rc=va(rc,m.a[i].p)});m.rc=vm(rc,1/s.size)}return m}
+function buildS(sm){const{A,B}=parseS(sm),C=ctx(A,B),ring=A.map((a,i)=>a.ar?i:-1).filter(i=>i>=0);
+ if(ring.length){ring.forEach((i,k)=>{const t=k*Math.PI/3;C.pos[i]=[1.4*Math.cos(t),1.4*Math.sin(t),0];C.done.add(i)});
+  ring.forEach((i,k)=>{const t=k*Math.PI/3,rd=[Math.cos(t),Math.sin(t),0],tn=[-Math.sin(t),Math.cos(t),0];C.adj[i].filter(([j])=>!C.done.has(j)).forEach(([j,o])=>{C.pos[j]=va(C.pos[i],vm(rd,blen(A,C,i,j,o)));C.done.add(j);grow(C,j,vm(rd,-1),tn,false)})})}
+ else{C.pos[0]=[0,0,0];grow(C,0,[0,0,-1],[1,0,0],true)}
+ return fin({a:A.map((a,i)=>({e:a.e,p:C.pos[i]})),b:B.map(x=>x.slice())})}
+// ---- sugars & polymers ----
+const mkMol=()=>({a:[],b:[]}),addAt=(M,e,p)=>{M.a.push({e,p});return M.a.length-1};
+function frag(M,sm,pi,dir,ref,len,extra){const{A,B}=parseS(sm,Object.assign({0:1},extra||{})),C=ctx(A,B);C.pos[0]=va(M.a[pi].p,vm(dir,len));grow(C,0,vm(dir,-1),ref,false);const base=M.a.length;A.forEach((a,i)=>M.a.push({e:a.e,p:C.pos[i]}));B.forEach(([i,j,o])=>M.b.push([base+i,base+j,o]));M.b.push([pi,base,1]);return base}
+const chDir=(i,k)=>{const t=i*Math.PI/3,sg=i%2?-1:1;return k=='a'?[0,0,sg]:vn([Math.cos(t),Math.sin(t),-.33*sg])};
+function chair(M,types,subs){const ids=[],fr={};for(let i=0;i<6;i++){const t=i*Math.PI/3;ids.push(addAt(M,types[i],[1.45*Math.cos(t),1.45*Math.sin(t),i%2?-.25:.25]))}
+ for(let i=0;i<6;i++)M.b.push([ids[i],ids[(i+1)%6],1]);
+ for(let i=0;i<6;i++){const t=i*Math.PI/3,tn=[-Math.sin(t),Math.cos(t),0],s=subs[i]||{};['a','e'].forEach(k=>{const f=s[k];if(!f)return;const sm=Array.isArray(f)?f[0]:f,ex=Array.isArray(f)?f[1]:null;fr[i+k]=frag(M,sm,ids[i],chDir(i,k),tn,sm=='H'?1.09:(sm[0]=='C'?1.53:1.43),ex)})}
+ return{ids,fr}}
+const fuDir=(i,k)=>{const t=i*2*Math.PI/5;return vn([.5*Math.cos(t),.5*Math.sin(t),k=='u'?.86:-.86])};
+function furan(M,types,subs){const ids=[],zs=[0,0,0,0,.35];for(let i=0;i<5;i++){const t=i*2*Math.PI/5;ids.push(addAt(M,types[i],[1.28*Math.cos(t),1.28*Math.sin(t),zs[i]]))}
+ for(let i=0;i<5;i++)M.b.push([ids[i],ids[(i+1)%5],1]);
+ for(let i=0;i<5;i++){const t=i*2*Math.PI/5,tn=[-Math.sin(t),Math.cos(t),0],s=subs[i]||{};['u','d'].forEach(k=>{const f=s[k];if(!f)return;const sm=Array.isArray(f)?f[0]:f;frag(M,sm,ids[i],fuDir(i,k),tn,sm=='H'?1.09:(sm[0]=='C'?1.53:1.43),Array.isArray(f)?f[1]:null)})}
+ return{ids}}
+const LO=['O',{0:2}];
+function glcUnit(alpha,l1,l4){const M=mkMol(),s=[];s[0]=alpha?{a:l1?LO:'O',e:'H'}:{e:l1?LO:'O',a:'H'};s[1]={e:'O',a:'H'};s[2]={e:'O',a:'H'};s[3]=l4?{a:'H'}:{e:'O',a:'H'};s[4]={e:'CO',a:'H'};
+ const r=chair(M,['C','C','C','C','C','O'],s);return{M,o:l1?r.fr[alpha?'0a':'0e']:-1,c1:r.ids[0],cb:r.ids[3],db:chDir(3,'e')}}
+function fruPyr(){const M=mkMol(),s=[{a:'O',e:'CO'},{e:'O',a:'H'},{e:'O',a:'H'},{e:'O',a:'H'},{e:'H',a:'H'}];chair(M,['C','C','C','C','C','O'],s);return fin(M)}
+function fruFur(l2){const M=mkMol(),s=[l2?{d:'CO'}:{u:'O',d:'CO'},{u:'O',d:'H'},{d:'O',u:'H'},{u:'CO',d:'H'},{}],r=furan(M,['C','C','C','C','O'],s);return{M,o:-1,c1:-1,cb:r.ids[0],db:fuDir(0,'u')}}
+const ctr=P=>{let c=[0,0,0];P.forEach(p=>{c=va(c,p)});return vm(c,1/P.length)};
+function nbSet(M,i,d){const adj=M.a.map(()=>[]);M.b.forEach(([x,y])=>{adj[x].push(y);adj[y].push(x)});let cur=new Set([i]),all=new Set([i]);for(let k=0;k<d;k++){const nx=new Set();cur.forEach(x=>adj[x].forEach(y=>{if(!all.has(y)){all.add(y);nx.add(y)}}));cur=nx}return all}
+function joinU(A,B,ext){const Mx=A.M,Op=Mx.a[A.o].p,C1=Mx.a[A.c1].p,v1=vn(vs(Op,C1)),cen=ctr(Mx.a.map(a=>a.p)),base=perp(v1),cb=B.M.a[B.cb].p;
+ const exA=new Set([A.c1,A.o]),exB=new Set([B.cb]);let best=null;
+ for(const ang of[1.9,2.04,2.2])for(let az=0;az<6.28;az+=Math.PI/12)for(let tw=0;tw<6.28;tw+=Math.PI/12){
+  const n=mxv(rotAx(v1,az),base),q=vn(va(vm(v1,-Math.cos(ang)),vm(n,Math.sin(ang)))),Cb=va(Op,vm(q,1.43)),R=mxm(rotAx(q,tw),alignV(B.db,vm(q,-1))),pb=B.M.a.map(a=>va(mxv(R,vs(a.p,cb)),Cb));
+  let md=9;pb.forEach((p,i)=>{if(exB.has(i))return;Mx.a.forEach((a,j)=>{if(exA.has(j))return;const d=vl(vs(p,a.p));if(d<md)md=d})});
+  const sc=md+ext*vl(vs(ctr(pb),cen));if(!best||sc>best.sc)best={sc,pb}}
+ const off=Mx.a.length;B.M.a.forEach((a,i)=>Mx.a.push({e:a.e,p:best.pb[i]}));B.M.b.forEach(([i,j,o])=>Mx.b.push([off+i,off+j,o]));Mx.b.push([A.o,off+B.cb,1]);
+ return{M:Mx,o:B.o>=0?off+B.o:-1,c1:B.c1>=0?off+B.c1:-1}}
+function chainMol(n,alpha){let cur=glcUnit(alpha,true,false);for(let k=1;k<n;k++){const last=k==n-1;cur=joinU(cur,glcUnit(alpha,!last,true),.15)}return fin(cur.M)}
+function sucMol(){return fin(joinU(glcUnit(true,true,false),fruFur(true),.1).M)}
+function helixMol(n){const M=mkMol(),ca=[],w=100*Math.PI/180;for(let i=0;i<n;i++){const t=i*w,z=i*1.5;ca.push(addAt(M,'C',[2.3*Math.cos(t),2.3*Math.sin(t),z]));const r=addAt(M,'R',[4.5*Math.cos(t),4.5*Math.sin(t),z+.4]);M.b.push([ca[i],r,1]);if(i>0)M.b.push([ca[i-1],ca[i],1])}
+ for(let i=0;i+4<n;i++)M.b.push([ca[i],ca[i+4],.5]);return fin(M)}
+const MOLB={glucozo:v=>{const M=mkMol(),s=[v?{e:'O',a:'H'}:{a:'O',e:'H'},{e:'O',a:'H'},{e:'O',a:'H'},{e:'O',a:'H'},{e:'CO',a:'H'}];chair(M,['C','C','C','C','C','O'],s);return fin(M)},
+ fructozo:v=>v?fin(fruFur(false).M):fruPyr(),saccarozo:()=>sucMol(),mantozo:()=>chainMol(2,true),tinhbot:()=>chainMol(3,true),xenlulozo:()=>chainMol(3,false),protein:()=>helixMol(16)};
+const MC={};
+const MOL=[
+{id:'metan',n:'Metan',sm:['C'],geo:'Tứ diện đều, góc H–C–H ≈ 109,5°; C lai hóa sp³',typ:'Ankan (chỉ có liên kết đơn σ)',desc:'Metan <code>CH₄</code> là ankan đơn giản nhất. Nguyên tử C lai hóa sp³ tạo 4 liên kết σ C–H (dài 1,09 Å) hướng về 4 đỉnh của hình tứ diện đều, góc liên kết ≈ 109,5°. Phân tử không phân cực, là thành phần chính của khí thiên nhiên.'},
+{id:'etan',n:'Etan',sm:['CC'],geo:'Mỗi C có cấu trúc tứ diện; C–C = 1,54 Å; hai nhóm CH₃ quay tự do quanh liên kết C–C',typ:'Ankan (liên kết đơn σ)',desc:'Etan <code>C₂H₆</code> gồm hai nhóm CH₃ nối bằng liên kết đơn σ C–C. Liên kết đơn cho phép quay tự do quanh trục; dạng xen kẽ (staggered) có năng lượng thấp hơn dạng che khuất nên bền hơn.'},
+{id:'eten',n:'Etilen (eten)',sm:['C=C'],geo:'Phẳng, góc H–C–H ≈ 117°; C lai hóa sp²; C=C = 1,34 Å (1σ + 1π)',typ:'Anken (liên kết đôi C=C)',desc:'Etilen <code>C₂H₄</code>: hai nguyên tử C lai hóa sp² cùng nằm trong một mặt phẳng với 4 nguyên tử H. Liên kết đôi gồm 1 liên kết σ và 1 liên kết π (không cho quay tự do) nên phân tử phẳng và cứng; liên kết π kém bền nên anken dễ tham gia phản ứng cộng.'},
+{id:'etin',n:'Axetilen (etin)',sm:['C#C'],geo:'Thẳng hàng H–C≡C–H (180°); C lai hóa sp; C≡C = 1,20 Å (1σ + 2π)',typ:'Ankin (liên kết ba C≡C)',desc:'Axetilen <code>C₂H₂</code>: hai nguyên tử C lai hóa sp, phân tử thẳng hàng. Liên kết ba gồm 1 liên kết σ và 2 liên kết π vuông góc nhau; hai liên kết π làm axetilen rất dễ cộng hợp và có tính axit yếu ở liên kết C–H.'},
+{id:'benzen',n:'Benzen',sm:['c1ccccc1'],geo:'Lục giác đều phẳng, C–C = 1,40 Å, góc 120°; 6 C lai hóa sp²',typ:'Hiđrocacbon thơm',desc:'Benzen <code>C₆H₆</code> có 6 nguyên tử C lai hóa sp² tạo vòng lục giác đều phẳng. Sáu electron π không định chỗ trên toàn vòng (hệ liên hợp) làm mọi liên kết C–C dài bằng nhau (1,40 Å, trung gian giữa đơn và đôi) và vòng rất bền. Nét đứt biểu diễn liên kết π liên hợp.'},
+{id:'metanol',n:'Metanol',sm:['CO'],geo:'C lai hóa sp³ (tứ diện); góc C–O–H ≈ 108°',typ:'Ancol no, đơn chức (nhóm –OH)',desc:'Metanol <code>CH₃OH</code>: nhóm hiđroxyl –OH gắn vào C no. Liên kết O–H phân cực tạo được liên kết hiđro, nên metanol tan vô hạn trong nước và có nhiệt độ sôi cao hơn nhiều so với metan.'},
+{id:'etanol',n:'Etanol',sm:['CCO'],geo:'Các C lai hóa sp³; C–O = 1,43 Å; góc C–O–H ≈ 108°',typ:'Ancol no, đơn chức (nhóm –OH)',desc:'Etanol <code>C₂H₅OH</code> (rượu etylic) gồm gốc etyl C₂H₅– liên kết với nhóm –OH. Phần –OH phân cực (ưa nước), gốc etyl kị nước; nhờ liên kết hiđro giữa các phân tử nên etanol sôi ở 78 °C, cao hơn nhiều so với etan.'},
+{id:'phenol',n:'Phenol',sm:['c1ccccc1O'],geo:'Vòng benzen phẳng, nhóm –OH nằm trong mặt phẳng vòng; C–O = 1,36 Å',typ:'Phenol (–OH gắn trực tiếp vào vòng benzen)',desc:'Phenol <code>C₆H₅OH</code>: nhóm –OH gắn trực tiếp vào vòng benzen. Cặp electron của O liên hợp với vòng thơm làm liên kết C–O ngắn hơn ở ancol và liên kết O–H phân cực mạnh hơn, nên phenol có tính axit yếu (mạnh hơn ancol) và dễ thế vào vị trí ortho, para.'},
+{id:'metanal',n:'Metanal (anđehit fomic)',sm:['C=O'],geo:'Phẳng, góc H–C–H ≈ 118°; C lai hóa sp²; C=O = 1,21 Å',typ:'Anđehit (nhóm –CHO)',desc:'Metanal <code>HCHO</code>: nguyên tử C lai hóa sp² nằm giữa O và hai H trong cùng một mặt phẳng. Liên kết đôi C=O phân cực mạnh (O mang δ⁻, C mang δ⁺) nên nhóm cacbonyl dễ bị tác nhân nucleophin tấn công.'},
+{id:'etanal',n:'Etanal (anđehit axetic)',sm:['CC=O'],geo:'C của nhóm CHO lai hóa sp² (phẳng, 120°); CH₃ lai hóa sp³',typ:'Anđehit (nhóm –CHO)',desc:'Etanal <code>CH₃CHO</code>: nhóm CH₃ (sp³) nối với nhóm –CHO (sp², phẳng). Anđehit bị oxi hóa thành axit cacboxylic và bị khử thành ancol bậc một; nhóm –CHO cho phản ứng tráng bạc.'},
+{id:'axetic',n:'Axit axetic',sm:['CC(=O)O'],geo:'Nhóm –COOH phẳng; C=O = 1,21 Å, C–O = 1,36 Å; C của –COOH lai hóa sp²',typ:'Axit cacboxylic (nhóm –COOH)',desc:'Axit axetic <code>CH₃COOH</code>: nhóm cacboxyl gồm C=O và –OH liên hợp với nhau, tất cả nằm trong một mặt phẳng. Liên kết O–H phân cực mạnh nên H dễ tách ra dưới dạng H⁺ (tính axit); các phân tử còn tạo dime nhờ liên kết hiđro.'},
+{id:'este',n:'Este (axetat)',sm:['CC(=O)OC','CC(=O)OCC'],vl:'Este',vo:['Metyl axetat','Etyl axetat'],geo:'Nhóm –COO– phẳng (sp²); liên kết C–O–C có góc ≈ 117°',typ:'Este (nhóm –COO–)',desc:'Este <code>CH₃COOR</code> được tạo từ axit cacboxylic và ancol (phản ứng este hóa, loại 1 phân tử nước). Nhóm –COO– phẳng, không còn H linh động nên este không tạo liên kết hiđro với nhau và sôi thấp hơn axit, ancol tương ứng; nhiều este có mùi thơm trái cây.'},
+{id:'glucozo',n:'Glucozơ',vl:'Dạng vòng',vo:['α-glucozơ','β-glucozơ'],geo:'Vòng 6 cạnh (piranozơ) dạng ghế; ở β-glucozơ mọi nhóm –OH và –CH₂OH đều ở vị trí xích đạo',typ:'Monosaccarit (aldohexozơ)',desc:'Glucozơ <code>C₆H₁₂O₆</code> tồn tại chủ yếu ở dạng vòng 6 cạnh. Hai dạng α và β khác nhau ở vị trí nhóm –OH hemiaxetal (C1): ở α-glucozơ –OH nằm ở vị trí trục, ở β-glucozơ nằm ở vị trí xích đạo. Trong dung dịch hai dạng chuyển hóa qua dạng mạch hở có nhóm –CHO.'},
+{id:'fructozo',n:'Fructozơ',vl:'Dạng vòng',vo:['Vòng 6 cạnh','Vòng 5 cạnh'],geo:'Xetohexozơ; vòng piranozơ (ghế) hoặc furanozơ (5 cạnh, gần phẳng)',typ:'Monosaccarit (xetohexozơ)',desc:'Fructozơ <code>C₆H₁₂O₆</code> là đồng phân của glucozơ, có nhóm cacbonyl ở C2 (nhóm xeton). Ở dạng tự do tồn tại chủ yếu là vòng 6 cạnh; trong saccarozơ nó ở dạng vòng 5 cạnh (furanozơ). Là đường ngọt nhất trong các loại đường.'},
+{id:'saccarozo',n:'Saccarozơ',geo:'Gồm gốc α-glucozơ (vòng 6) và β-fructozơ (vòng 5) nối qua cầu O 1→2',typ:'Đisaccarit không khử',desc:'Saccarozơ <code>C₁₂H₂₂O₁₁</code> (đường mía) gồm một gốc α-glucozơ và một gốc β-fructozơ liên kết với nhau bằng liên kết glicozit C1–O–C2, loại đi một phân tử nước. Cả hai nhóm OH hemiaxetal đều tham gia liên kết nên saccarozơ không có tính khử; khi thủy phân thu được glucozơ và fructozơ.'},
+{id:'mantozo',n:'Mantozơ',geo:'Hai gốc α-glucozơ nối bằng liên kết α-1,4-glicozit (C1–O–C4)',typ:'Đisaccarit có tính khử',desc:'Mantozơ <code>C₁₂H₂₂O₁₁</code> (đường mạch nha) gồm hai gốc α-glucozơ nối với nhau bằng liên kết α-1,4-glicozit. Một đầu vẫn còn nhóm –OH hemiaxetal tự do nên mantozơ có tính khử; thủy phân tạo hai phân tử glucozơ. Mantozơ là sản phẩm của enzim amilaza phân giải tinh bột.'},
+{id:'tinhbot',n:'Tinh bột (amilozơ)',geo:'Mạch α-1,4-glicozit; mô hình gồm 3 mắt xích (amilozơ thật xoắn lò xo, mỗi vòng ~6 mắt xích)',typ:'Polisaccarit (C₆H₁₀O₅)ₙ',desc:'Tinh bột <code>(C₆H₁₀O₅)ₙ</code> gồm amilozơ (mạch không phân nhánh, liên kết α-1,4-glicozit, xoắn lò xo) và amilopectin (có thêm nhánh α-1,6). Hình trình bày một đoạn 3 mắt xích α-glucozơ. Tinh bột thủy phân thành glucozơ và cho màu xanh tím với dung dịch iot.'},
+{id:'xenlulozo',n:'Xenlulozơ',geo:'Mạch thẳng β-1,4-glicozit; các mắt xích xoay 180° so với nhau; mô hình 3 mắt xích',typ:'Polisaccarit (C₆H₁₀O₅)ₙ',desc:'Xenlulozơ <code>(C₆H₁₀O₅)ₙ</code> gồm các mắt xích β-glucozơ nối bằng liên kết β-1,4-glicozit, mỗi mắt xích xoay 180° so với mắt xích kề nên mạch thẳng. Các mạch xếp song song và liên kết với nhau bằng liên kết hiđro tạo sợi bền, là thành phần chính của thành tế bào thực vật.'},
+{id:'metylamin',n:'Metylamin',sm:['CN'],geo:'Tháp tam giác tại N (sp³, còn 1 cặp e tự do); C–N = 1,47 Å',typ:'Amin bậc một (–NH₂)',desc:'Metylamin <code>CH₃NH₂</code>: nguyên tử N còn cặp electron tự do nên metylamin có tính bazơ (nhận H⁺) mạnh hơn amoniac, vì nhóm CH₃ đẩy electron. Các phân tử tạo liên kết hiđro N–H···N.'},
+{id:'anilin',n:'Anilin',sm:['c1ccccc1N'],geo:'Vòng benzen phẳng gắn nhóm –NH₂; C–N = 1,40 Å',typ:'Amin thơm bậc một',desc:'Anilin <code>C₆H₅NH₂</code>: cặp electron tự do của N liên hợp với vòng benzen nên tính bazơ rất yếu (yếu hơn amoniac) và vòng thơm dễ bị thế ở vị trí ortho, para (ví dụ tạo kết tủa trắng 2,4,6-tribromanilin với nước brom).'},
+{id:'aminoaxit',n:'Amino axit',sm:['NCC(=O)O','CC(N)C(=O)O','OCC(N)C(=O)O'],vl:'Amino axit',vo:['Glyxin','Alanin','Serin'],geo:'Cα lai hóa sp³ gắn nhóm –NH₂, –COOH, H và gốc R',typ:'Hợp chất tạp chức (–NH₂ và –COOH)',desc:'Amino axit <code>H₂N–CHR–COOH</code> chứa đồng thời nhóm amino (tính bazơ) và nhóm cacboxyl (tính axit). Trong dung dịch nước chúng tồn tại chủ yếu dạng ion lưỡng cực H₃N⁺–CHR–COO⁻. Các amino axit nối với nhau bằng liên kết peptit –CO–NH– tạo thành protein.'},
+{id:'protein',n:'Protein (xoắn α)',geo:'Cấu trúc bậc 2 dạng xoắn α: 3,6 gốc amino axit mỗi vòng, bước xoắn 5,4 Å, liên kết hiđro giữa gốc i và i+4',typ:'Polipeptit (liên kết peptit –CO–NH–)',desc:'Protein là polipeptit gồm nhiều α-amino axit nối bằng liên kết peptit. Hình vẽ chỉ các nguyên tử Cα (xám) của khung chuỗi xoắn α, các gốc R (xanh lá) hướng ra ngoài và liên kết hiđro (nét đứt) giữa gốc thứ i và i+4 giữ cho chuỗi xoắn bền vững.'}];
+// ===== crystals, DNA, peptide =====
+Object.assign(EC,{Na:'#a855f7',Cl:'#16a34a',P:'#f97316',bA:'#22c55e',bT:'#ef4444',bG:'#eab308',bC:'#3b82f6'});Object.assign(EV,{Na:1.4,Cl:2.1,P:1,bA:1,bT:1,bG:1,bC:1});Object.assign(EB,{Na:.6,Cl:.95,P:.7,bA:.55,bT:.55,bG:.55,bC:.55});
+function naclMol(){const M=mkMol(),d=2.82,id={};for(let i=0;i<3;i++)for(let j=0;j<3;j++)for(let k=0;k<3;k++)id[i+','+j+','+k]=addAt(M,(i+j+k)%2?'Cl':'Na',[i*d,j*d,k*d]);
+ for(let i=0;i<3;i++)for(let j=0;j<3;j++)for(let k=0;k<3;k++){const a=id[i+','+j+','+k];[[1,0,0],[0,1,0],[0,0,1]].forEach(([x,y,z])=>{const b=id[(i+x)+','+(j+y)+','+(k+z)];if(b!=null)M.b.push([a,b,.5])})}
+ return fin(M)}
+function diamondMol(){const M=mkMol(),u=3.567/4,pts=[];for(let i=0;i<=8;i++)for(let j=0;j<=8;j++)for(let k=0;k<=8;k++){const s=i+j+k,ev=i%2==0&&j%2==0&&k%2==0,od=i%2&&j%2&&k%2;if((ev&&s%4==0)||(od&&s%4==3))pts.push([i,j,k])}
+ pts.forEach(p=>addAt(M,'C',[p[0]*u,p[1]*u,p[2]*u]));
+ for(let a=0;a<pts.length;a++)for(let b=a+1;b<pts.length;b++){const d=(pts[a][0]-pts[b][0])**2+(pts[a][1]-pts[b][1])**2+(pts[a][2]-pts[b][2])**2;if(d==3)M.b.push([a,b,1])}
+ return fin(M)}
+function graphMol(){const M=mkMol(),a=1.42,s3=Math.sqrt(3),L=[];[0,1].forEach(l=>{const idx=[];for(let m=-3;m<=3;m++)for(let n=-3;n<=3;n++)[[0,0],[0,a]].forEach(([bx,by])=>{const x=m*s3*a+n*s3*a/2+bx,y=n*1.5*a+by;if(Math.hypot(x,y-a/2)<4.6)idx.push(addAt(M,'C',[x,l*3.35,y+(l?a:0)]))});L.push(idx)});
+ L.forEach(idx=>{for(let i=0;i<idx.length;i++)for(let j=i+1;j<idx.length;j++){const p=M.a[idx[i]].p,q=M.a[idx[j]].p;if(Math.hypot(p[0]-q[0],p[2]-q[2])<a*1.05)M.b.push([idx[i],idx[j],1])}});
+ L[0].forEach(i=>L[1].forEach(j=>{const p=M.a[i].p,q=M.a[j].p;if(Math.hypot(p[0]-q[0],p[2]-q[2])<.05)M.b.push([i,j,.5])}));return fin(M)}
+function dnaMol(){const M=mkMol(),seq='ATGCGATCGTAC',cp={A:'T',T:'A',G:'C',C:'G'};let p1=-1,p2=-1;
+ for(let i=0;i<seq.length;i++){const t=i*Math.PI/5,z=i*3.4,t2=t+Math.PI-.9,s1=addAt(M,'P',[10*Math.cos(t),z,10*Math.sin(t)]),s2=addAt(M,'P',[10*Math.cos(t2),z,10*Math.sin(t2)]),x1=addAt(M,'b'+seq[i],[3.8*Math.cos(t),z,3.8*Math.sin(t)]),x2=addAt(M,'b'+cp[seq[i]],[3.8*Math.cos(t2),z,3.8*Math.sin(t2)]);
+  M.b.push([s1,x1,1],[s2,x2,1],[x1,x2,.5]);if(p1>=0)M.b.push([p1,s1,1],[p2,s2,1]);p1=s1;p2=s2}
+ return fin(M)}
+function pepMol(){const m=buildS('NCC(=O)NC(C)C(=O)NC(CO)C(=O)O'),hl=new Set();m.b.forEach(([i,j],ix)=>{const a=m.a[i].e,b=m.a[j].e;if((a=='C'&&b=='N')||(a=='N'&&b=='C')){const c=a=='C'?i:j;if(m.b.some(([x,y,o])=>o==2&&(x==c||y==c)&&(m.a[x].e=='O'||m.a[y].e=='O')))hl.add(ix)}});m.hl=hl;return m}
+Object.assign(MOLB,{nacl:naclMol,kimcuong:diamondMol,graphit:graphMol,adn:dnaMol,peptit:pepMol});
+MOL.push(
+{id:'nacl',n:'Natri clorua (NaCl)',geo:'Mạng lập phương tâm mặt kiểu muối ăn (rock-salt); mỗi ion được bao quanh bởi 6 ion trái dấu',typ:'Tinh thể ion',desc:'Tinh thể NaCl gồm các ion Na⁺ (tím, nhỏ) và Cl⁻ (xanh lá, lớn) xếp luân phiên trong mạng lập phương; lực hút tĩnh điện giữa các ion trái dấu (nét đứt) giữ chặt mạng tinh thể. Vì vậy NaCl cứng, giòn, nóng chảy ở nhiệt độ cao (801 °C), tan trong nước, và dẫn điện khi nóng chảy hoặc ở dạng dung dịch. Hình vẽ là khối 3×3×3 ion.',xi:()=>[['Loại liên kết','Liên kết ion Na⁺ – Cl⁻'],['Kiểu mạng','Lập phương tâm mặt (rock-salt)'],['Số phối trí','6 : 6'],['Hằng số mạng a','0,564 nm'],['Khoảng cách Na⁺–Cl⁻','0,282 nm'],['Tính chất','Cứng, giòn, tan trong nước, t°nc = 801 °C']]},
+{id:'kimcuong',n:'Kim cương',geo:'Mạng kiểu kim cương; mỗi C lai hóa sp³ liên kết với 4 C ở 4 đỉnh tứ diện, C–C = 1,54 Å',typ:'Tinh thể nguyên tử (cộng hóa trị)',desc:'Trong kim cương, mỗi nguyên tử C lai hóa sp³ tạo 4 liên kết cộng hóa trị với 4 nguyên tử C lân cận ở 4 đỉnh của hình tứ diện đều, tạo thành mạng không gian ba chiều vững chắc. Vì thế kim cương cực kỳ cứng, nóng chảy trên 3500 °C, không dẫn điện và trong suốt.',xi:()=>[['Liên kết','Cộng hóa trị C–C (1,54 Å), C lai hóa sp³'],['Kiểu mạng','Lập phương tâm mặt kiểu kim cương'],['Số phối trí','4 (tứ diện đều)'],['Hằng số mạng a','0,357 nm'],['Tính chất','Rất cứng, không dẫn điện, trong suốt'],['Nhiệt độ nóng chảy','> 3500 °C']]},
+{id:'graphit',n:'Than chì (graphit)',geo:'Các lớp phẳng gồm vòng 6 cạnh (C lai hóa sp², C–C = 1,42 Å); các lớp cách nhau 3,35 Å',typ:'Tinh thể có cấu trúc lớp',desc:'Graphit gồm các lớp nguyên tử C xếp thành mạng tổ ong phẳng; trong mỗi lớp C lai hóa sp² liên kết cộng hóa trị bền với 3 C lân cận, electron π còn lại linh động trên cả lớp. Các lớp liên kết với nhau bằng lực Van der Waals yếu (nét đứt) nên trượt lên nhau dễ dàng: graphit mềm, trơn và dẫn điện, khác hẳn kim cương dù cùng là cacbon.',xi:()=>[['Liên kết trong lớp','Cộng hóa trị C–C (1,42 Å), C lai hóa sp²'],['Liên kết giữa các lớp','Lực Van der Waals (3,35 Å)'],['Kiểu xếp','AB (lớp sau lệch nửa vòng so với lớp trước)'],['Tính chất','Mềm, trơn, dẫn điện nhờ electron π'],['So với kim cương','Cùng là cacbon nhưng cấu trúc khác → tính chất khác']]},
+{id:'peptit',n:'Peptit (Gly–Ala–Ser)',geo:'Nhóm –CO–NH– của liên kết peptit phẳng; C–N có một phần tính chất liên kết đôi',typ:'Tripeptit (2 liên kết peptit)',desc:'Peptit được tạo thành khi các α-amino axit nối với nhau bằng liên kết peptit –CO–NH– (loại một phân tử nước giữa nhóm –COOH của amino axit này và nhóm –NH₂ của amino axit kia). Hình vẽ là tripeptit Gly–Ala–Ser; hai liên kết peptit được tô màu cam. Nhóm peptit phẳng, cứng nên quyết định hình dạng chuỗi protein.',xi:m=>{let mass=0;m.a.forEach(a=>{mass+=MM[a.e]||0});return[['Chuỗi','Gly – Ala – Ser'],['Công thức phân tử',formulaOf(m)],['Khối lượng mol',f(mass,2)+' g/mol'],['Số liên kết peptit',m.hl.size],['Liên kết peptit','–CO–NH– (tô cam)'],['Đầu N / đầu C','H₂N– (Gly) / –COOH (Ser)']]}},
+{id:'adn',n:'ADN (chuỗi xoắn kép)',lg:[['bA','Adenin (A)'],['bT','Timin (T)'],['bG','Guanin (G)'],['bC','Xitozin (C)'],['P','Khung đường – photphat']],geo:'Hai mạch đối song song xoắn phải quanh một trục (dạng B), 10 cặp base mỗi vòng xoắn',typ:'Axit nucleic (polinucleotit)',desc:'ADN gồm hai mạch polinucleotit xoắn đều quanh một trục. Khung của mỗi mạch là đường deoxiribozơ nối với nhóm photphat (cam); các base nằm bên trong và ghép cặp bổ sung bằng liên kết hiđro (nét đứt): A–T (2 liên kết hiđro), G–C (3 liên kết hiđro). Mỗi vòng xoắn dài 3,4 nm gồm 10 cặp base, đường kính xoắn ≈ 2 nm. Hình vẽ là 12 cặp base.',xi:()=>[['Cấu trúc','Chuỗi xoắn kép (dạng B)'],['Số cặp base trong mô hình','12'],['Đường kính chuỗi xoắn','≈ 2 nm'],['Bước xoắn','3,4 nm (10 cặp base)'],['Khoảng cách hai cặp base kế tiếp','0,34 nm'],['Cặp bổ sung','A–T (2 liên kết H), G–C (3 liên kết H)']]}
+);
+
+const MD={};MOL.forEach(m=>{MD[m.id]=m});
+function getMol(id,v){v=v||0;const k=id+v;if(!MC[k]){const m=MD[id];MC[k]=MOLB[id]?MOLB[id](v):buildS(m.sm[v])}return MC[k]}
+const MM={H:1.008,C:12.011,N:14.007,O:15.999,S:32.06},SUBN='₀₁₂₃₄₅₆₇₈₉';
+function formulaOf(m){const c={};m.a.forEach(a=>{c[a.e]=(c[a.e]||0)+1});return Object.keys(c).sort((x,y)=>x=='C'?-1:y=='C'?1:x=='H'?-1:y=='H'?1:x<y?-1:1).map(k=>k+(c[k]>1?String(c[k]).replace(/\d/g,d=>SUBN[d]):'')).join('')}
+function mdraw(m,s,p){const o={cx:W/2,cy:H/2-8,yaw:V3.yaw+(p.rot?s.t*.5:0),pitch:V3.pitch,k:.02,sc:Math.min(W,H)*.42/Math.max(m.R+1.1,3)},st=p.style,pt=m.a.map(a=>P3(a.p[0]-m.c[0],a.p[1]-m.c[1],a.p[2]-m.c[2],o)),it=[];
+ const rA=(e,f)=>(st==1?EV[e]*.85:EB[e])*o.sc*f;
+ m.a.forEach((a,i)=>it.push({z:pt[i][2],i}));if(st!=1)m.b.forEach((b,ib)=>it.push({z:(pt[b[0]][2]+pt[b[1]][2])/2,b,ib}));it.sort((a,b)=>a.z-b.z);
+ const rcp=m.rc?P3(m.rc[0]-m.c[0],m.rc[1]-m.c[1],m.rc[2]-m.c[2],o):null;
+ it.forEach(x=>{if(x.b){const[i,j,od]=x.b,hc=m.hl&&m.hl.has(x.ib),A=pt[i],B=pt[j],dx=B[0]-A[0],dy=B[1]-A[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,f=(A[3]+B[3])/2,w=st==2?2.2:.13*o.sc*f;
+   const seg=(ox,oy,ww,dash)=>{if(dash)cx.setLineDash([4,3]);if(st==2){const mx=(A[0]+B[0])/2+ox,my=(A[1]+B[1])/2+oy;ln(A[0]+ox,A[1]+oy,mx,my,EC[m.a[i].e]=='#e5e7eb'?'#9ca3af':EC[m.a[i].e],ww);ln(mx,my,B[0]+ox,B[1]+oy,EC[m.a[j].e]=='#e5e7eb'?'#9ca3af':EC[m.a[j].e],ww)}else ln(A[0]+ox,A[1]+oy,B[0]+ox,B[1]+oy,hc?'#f59e0b':'#9ca3af',hc?ww*1.6:ww);cx.setLineDash([])};
+   if(od==.5){cx.globalAlpha=.8;seg(0,0,1.6,true);cx.globalAlpha=1}
+   else if(od==1.5){seg(0,0,w,false);let sg=1;if(rcp){const mx=(A[0]+B[0])/2,my=(A[1]+B[1])/2;sg=((rcp[0]-mx)*nx+(rcp[1]-my)*ny)>0?1:-1}seg(nx*sg*w*2,ny*sg*w*2,Math.max(1.2,w*.5),true)}
+   else if(od==3){seg(0,0,w*.5,false);seg(nx*w*1.6,ny*w*1.6,w*.5,false);seg(-nx*w*1.6,-ny*w*1.6,w*.5,false)}
+   else if(od==2){seg(nx*w*.9,ny*w*.9,w*.55,false);seg(-nx*w*.9,-ny*w*.9,w*.55,false)}
+   else seg(0,0,w,false)}
+  else{const a=m.a[x.i],P=pt[x.i],r=st==2?Math.max(2.2,rA(a.e,P[3])*.3):rA(a.e,P[3]);sph(P[0],P[1],r,EC[a.e]);if(st!=2&&r>10&&a.e!='H'&&a.e!='R'){cx.fillStyle='#fff';cx.font='bold '+Math.round(r*.9)+'px system-ui';cx.textAlign='center';cx.fillText(a.e[0]=='b'?a.e[1]:a.e,P[0],P[1]+r*.32);cx.textAlign='left'}}});
+ const lg=(m.lg||[['C','Cacbon'],['H','Hiđro'],['O','Oxi'],['N','Nitơ'],['Na','Natri'],['Cl','Clo']]).filter(([e])=>m.a.some(a=>a.e==e)),lgR=m.a.some(a=>a.e=='R')?[['R','Gốc R']]:[];let x=12;cx.font='12px system-ui';
+ lg.concat(lgR).forEach(([e,n])=>{cx.fillStyle=EC[e];cx.beginPath();cx.arc(x+6,H-16,6,0,7);cx.fill();cx.fillStyle=col('--mute');cx.fillText(n,x+16,H-12);x+=26+cx.measureText(n).width});
+ cx.fillStyle=col('--mute');cx.fillText('Kéo chuột để xoay',W-110,H-12)}
+function molEntry(m){const ps=[];if(m.vo)ps.push(['v',m.vl,0,m.vo.length-1,1,0]);ps.push(['style','Kiểu mô hình',0,2,1,0],['rot','Tự quay',0,1,1,1]);
+ OPT['m-'+m.id]={style:{l:'Kiểu mô hình',o:['Quả cầu – que','Quả cầu đầy','Khung dây']},rot:{l:'Tự quay',o:['Tắt','Bật']}};if(m.vo)OPT['m-'+m.id].v={l:m.vl,o:m.vo};
+ return{name:m.n,d3:true,nog:true,desc:m.desc,params:ps,reset(p){return{t:0}},step(s,p,dt){s.t+=dt},val:()=>0,
+  info(s,p){const mol=getMol(m.id,p.v);if(m.xi)return m.xi(mol,p);const fo=['tinhbot','xenlulozo','protein'].includes(m.id)?null:formulaOf(mol);let mass=0,pi=0;mol.a.forEach(a=>{mass+=MM[a.e]||0});mol.b.forEach(b=>{if(b[2]>1&&b[2]!=.5)pi+=b[2]-1});const sg=mol.b.filter(b=>b[2]!=.5).length;
+   const nm=m.vo?m.n+' ('+m.vo[p.v||0]+')':m.n;
+   return[['Tên',nm],['Công thức phân tử',fo||(m.id=='protein'?'Polipeptit':'(C₆H₁₀O₅)ₙ')],mass&&fo?['Khối lượng mol',f(mass,2)+' g/mol']:['Số nguyên tử (mô hình)',mol.a.length],['Số liên kết σ / π',m.id=='protein'?'—':sg+' / '+f(pi,pi%1?1:0)],['Hình học – lai hóa',m.geo],['Loại hợp chất',m.typ]]},
+  draw(s,p){mdraw(getMol(m.id,p.v),s,p)}}}
+MOL.forEach(m=>{EX['m-'+m.id]=molEntry(m)});
+
+// ===== Physics: solar system, earth-moon, eclipses, tides, standing waves =====
+const PL=[['Sao Thủy',.387,87.97,2440,'#9ca3af',0,167],['Sao Kim',.723,224.7,6052,'#fbbf24',0,464],['Trái Đất',1,365.26,6371,'#3b82f6',1,15],['Sao Hỏa',1.524,686.98,3390,'#ef4444',2,-65],['Sao Mộc',5.203,4332.6,69911,'#d6a572',95,-110],['Sao Thổ',9.537,10759,58232,'#e8d28a',146,-140],['Sao Thiên Vương',19.19,30687,25362,'#7dd3fc',28,-195],['Sao Hải Vương',30.07,60190,24622,'#6366f1',16,-200]],PR=[3.2,5,5.4,4,11.5,10,7.5,7.2],PO=a=>10+26*Math.sqrt(a);
+const MPN=['Trăng non (sóc)','Trăng lưỡi liềm đầu tháng','Trăng thượng huyền','Trăng khuyết đầu tháng','Trăng tròn (vọng)','Trăng khuyết cuối tháng','Trăng hạ huyền','Trăng lưỡi liềm cuối tháng'];
+const drawPhase=(x,y,r,e,lit,dark)=>{cx.fillStyle=dark;cx.beginPath();cx.arc(x,y,r,0,7);cx.fill();const c=Math.cos(e),wax=Math.sin(e)>=0;cx.fillStyle=lit;cx.beginPath();for(let i=0;i<=40;i++){const yy=-r+2*r*i/40,lb=Math.sqrt(Math.max(0,r*r-yy*yy));i?cx.lineTo(x+(wax?lb:-lb),y+yy):cx.moveTo(x+(wax?lb:-lb),y+yy)}for(let i=40;i>=0;i--){const yy=-r+2*r*i/40,lb=Math.sqrt(Math.max(0,r*r-yy*yy));cx.lineTo(x+(wax?c*lb:-c*lb),y+yy)}cx.closePath();cx.fill()};
+const litBody=(x,y,r,a,lit,dark)=>{cx.fillStyle=dark;cx.beginPath();cx.arc(x,y,r,0,7);cx.fill();cx.fillStyle=lit;cx.beginPath();cx.arc(x,y,r,a-Math.PI/2,a+Math.PI/2);cx.closePath();cx.fill()};
+const ovl=(r1,r2,d)=>{if(d>=r1+r2)return 0;if(d<=Math.abs(r1-r2))return Math.PI*Math.min(r1,r2)**2;const a=Math.acos((d*d+r1*r1-r2*r2)/(2*d*r1)),b=Math.acos((d*d+r2*r2-r1*r1)/(2*d*r2));return r1*r1*a+r2*r2*b-.5*Math.sqrt((-d+r1+r2)*(d+r1-r2)*(d-r1+r2)*(d+r1+r2))};
+const RS=696.34,RM=1.737,RE=6.371,DS=149600;
+Object.assign(EX,{
+solar3d:{name:'🪐 Hệ Mặt Trời 3D',d3:true,nog:true,
+ desc:'Tám hành tinh chuyển động quanh Mặt Trời trên các quỹ đạo gần như cùng một mặt phẳng, theo định luật Kepler III: <code>T² = a³</code> (T tính bằng năm, a tính bằng AU) – hành tinh càng xa càng chuyển động chậm. Kéo chuột để xoay góc nhìn 3D. Khoảng cách quỹ đạo được nén lại và kích thước hành tinh được phóng to để dễ quan sát; vòng chấm giữa Sao Hỏa và Sao Mộc là vành đai tiểu hành tinh.',
+ params:[['sel','Hành tinh khảo sát',0,7,1,2],['sp','Tốc độ (ngày/giây)',1,365,1,40],['orb','Quỹ đạo',0,1,1,1],['lab','Nhãn tên',0,1,1,1]],
+ reset(p){return{t:0}},step(s,p,dt){s.t+=dt*p.sp},val:()=>0,
+ info(s,p){const[n,a,T,R,k,mo,tp]=PL[p.sel];return[['Hành tinh',n],['Khoảng cách TB tới Mặt Trời',f(a,2)+' AU ('+f(a*149.6,0)+' triệu km)'],['Chu kỳ quỹ đạo',T<1000?f(T,1)+' ngày':f(T/365.26,1)+' năm'],['Tốc độ quỹ đạo',f(2*Math.PI*a*149.6e6/(T*86400),1)+' km/s'],['Bán kính',f(R,0)+' km ('+f(R/6371,2)+' R⊕)'],['Số vệ tinh (xấp xỉ)',mo],['Nhiệt độ trung bình',tp+' °C'],['Thời gian mô phỏng',f(s.t/365.26,2)+' năm']]},
+ draw(s,p){const u=Math.min(W,H)/420,o={cx:W/2,cy:H/2,yaw:V3.yaw,pitch:V3.pitch+.95,k:.0012,sc:Math.min(W,H)*.46/152},it=[],ph=[.5,2.1,3.7,5.2,1,4.4,2.7,.2],pos=(r,a)=>P3(r*Math.cos(a),0,r*Math.sin(a),o);
+  if(p.orb)PL.forEach(([n,a])=>{const r=PO(a);cx.strokeStyle=col('--line');cx.lineWidth=1;cx.beginPath();for(let i=0;i<=72;i++){const q=pos(r,i*Math.PI/36);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke()});
+  cx.fillStyle=col('--mute');cx.globalAlpha=.6;for(let i=0;i<150;i++){const q=pos(PO(2.2+1.1*((i*37)%100)/100),i*2.399+s.t*.0005);cx.fillRect(q[0],q[1],1.4,1.4)}cx.globalAlpha=1;
+  const sun=pos(0,0);it.push({z:0,f:()=>{const r=15*u*sun[3],g=cx.createRadialGradient(sun[0],sun[1],r*.2,sun[0],sun[1],r*2.4);g.addColorStop(0,'#fff7ae');g.addColorStop(.35,'#fbbf24');g.addColorStop(1,'rgba(251,191,36,0)');cx.fillStyle=g;cx.beginPath();cx.arc(sun[0],sun[1],r*2.4,0,7);cx.fill();sph(sun[0],sun[1],r,'#f59e0b')}});
+  PL.forEach(([n,a,T,R,k],i)=>{const q=pos(PO(a),ph[i]+2*Math.PI*s.t/T);it.push({z:q[2],f:()=>{const r=Math.max(2,PR[i]*u*q[3]);if(i==5){cx.strokeStyle='#d6c27a';cx.lineWidth=2.5;cx.beginPath();cx.ellipse(q[0],q[1],r*2,r*2*(.3+.5*Math.abs(Math.sin(o.pitch))),-.25,0,7);cx.stroke()}sph(q[0],q[1],r,k);if(i==p.sel){cx.strokeStyle=col('--fg');cx.lineWidth=1.5;cx.beginPath();cx.arc(q[0],q[1],r+6,0,7);cx.stroke()}if(p.lab||i==p.sel){cx.fillStyle=col('--fg');cx.font='12px system-ui';cx.fillText(n,q[0]+r+4,q[1]-r)}}})});
+  it.sort((a,b)=>a.z-b.z).forEach(x=>x.f());cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Kéo chuột để xoay góc nhìn (khoảng cách quỹ đạo được nén lại)',10,H-12)}},
+
+earthmoon:{name:'🌙 Mặt Trời – Trái Đất – Mặt Trăng',nog:true,
+ desc:'Trái Đất quay quanh Mặt Trời (365,26 ngày), Mặt Trăng quay quanh Trái Đất (chu kỳ sao 27,32 ngày). Mặt Trăng luôn được Mặt Trời chiếu sáng một nửa; tùy góc giữa hướng Mặt Trời và hướng Mặt Trăng nhìn từ Trái Đất mà ta thấy các pha khác nhau. Chu kỳ pha (tháng giao hội) dài hơn chu kỳ sao vì Trái Đất cũng chuyển động: <code>{1|29,53} = {1|27,32} − {1|365,26}</code>. Hình không theo tỉ lệ.',
+ params:[['sp','Tốc độ (ngày/giây)',.5,20,.5,4]],
+ reset(p){return{t:0}},step(s,p,dt){s.t+=dt*p.sp},val:()=>0,
+ info(s,p){const e=(2*Math.PI*s.t/29.53)%(2*Math.PI),i=Math.floor(e/(2*Math.PI)*8+.5)%8;return[['Ngày trong chu kỳ pha',f(s.t%29.53,1)+' / 29,53'],['Pha hiện tại',MPN[i]],['Phần được chiếu sáng',f((1-Math.cos(e))/2*100,0)+'%'],['Góc Mặt Trời – Trái Đất – Mặt Trăng',f(e*180/Math.PI,0)+'°'],['Chu kỳ sao / giao hội','27,32 / 29,53 ngày'],['Thời gian trôi qua',f(s.t/365.26,2)+' năm']]},
+ draw(s,p){const t=s.t,e=(2*Math.PI*t/29.53)%(2*Math.PI),te=2*Math.PI*t/365.26,ox=W*.32,oy=H/2,R=Math.min(W*.26,H*.4),ex=ox+R*Math.cos(te),ey=oy-R*Math.sin(te),sa=-(te+Math.PI),ma=te+Math.PI+e,rm=Math.min(34,R*.3),mx=ex+rm*Math.cos(ma),my=ey-rm*Math.sin(ma);
+  cx.strokeStyle=col('--line');cx.lineWidth=1;cx.beginPath();cx.arc(ox,oy,R,0,7);cx.stroke();cx.setLineDash([3,4]);cx.beginPath();cx.arc(ex,ey,rm,0,7);cx.stroke();cx.setLineDash([]);
+  const g=cx.createRadialGradient(ox,oy,4,ox,oy,40);g.addColorStop(0,'#fff7ae');g.addColorStop(.4,'#fbbf24');g.addColorStop(1,'rgba(251,191,36,0)');cx.fillStyle=g;cx.beginPath();cx.arc(ox,oy,40,0,7);cx.fill();sph(ox,oy,17,'#f59e0b');
+  litBody(ex,ey,8,sa,'#3b82f6','#1e3a5f');litBody(mx,my,4.5,sa,'#e5e7eb','#475569');
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Mặt Trời',ox-22,oy+34);cx.fillText('Trái Đất',ex+10,ey-10);cx.fillText('Mặt Trăng',mx+8,my+14);cx.fillText('Quỹ đạo Trái Đất (không theo tỉ lệ)',10,H-12);
+  const px=W*.8,py=H*.3,pr=Math.min(52,W*.12);drawPhase(px,py,pr,e,'#f1f5f9','#334155');cx.strokeStyle=col('--mute');cx.lineWidth=1;cx.beginPath();cx.arc(px,py,pr,0,7);cx.stroke();
+  const i=Math.floor(e/(2*Math.PI)*8+.5)%8;cx.fillStyle=col('--fg');cx.font='bold 13px system-ui';cx.textAlign='center';cx.fillText(MPN[i],px,py+pr+20);cx.font='12px system-ui';cx.fillStyle=col('--mute');cx.fillText('Nhìn từ Trái Đất (bán cầu Bắc)',px,py+pr+36);
+  const q=Math.min(14,W*.03);for(let k=0;k<8;k++){const xx=px-3.5*q*2.1+k*q*2.1,yy=H-46;drawPhase(xx,yy,q*.85,k*Math.PI/4,'#f1f5f9','#334155');if(k==i){cx.strokeStyle=col('--acc2');cx.lineWidth=2;cx.beginPath();cx.arc(xx,yy,q*.85+3,0,7);cx.stroke()}}cx.textAlign='left'}},
+
+eclipse:{name:'🌑 Nhật thực & nguyệt thực',nog:true,
+ desc:'Nhật thực xảy ra khi Mặt Trăng chắn ánh sáng Mặt Trời: người ở vùng bóng tối (umbra) thấy nhật thực toàn phần, ở vùng bán dạ (penumbra) thấy nhật thực một phần. Nếu chóp bóng tối không chạm tới Trái Đất (Mặt Trăng ở xa) thì thấy nhật thực hình khuyên. Nguyệt thực xảy ra khi Mặt Trăng đi vào bóng của Trái Đất. Phương ngang được nén lại 10 lần so với phương dọc để vẽ vừa khung hình; chỉnh độ lệch để xem các kiểu thực khác nhau.',
+ params:[['mode','Loại hiện tượng',0,1,1,0],['off','Độ lệch của Mặt Trăng so với trục Mặt Trời – Trái Đất (nghìn km)',0,14,.25,2],['dem','Khoảng cách Trái Đất – Mặt Trăng (nghìn km)',356,407,1,384]],
+ reset(p){return{t:0}},step(s,p,dt){s.t+=dt},val:()=>0,
+ calc(p){const d=p.off,dem=p.dem,Dsm=DS-dem,Lu=RM*Dsm/(RS-RM),ru=RM*(1-dem/Lu),rp=RM+dem*(RS+RM)/Dsm,au=Math.abs(ru),ty=d-au<=RE?(ru>0?'Nhật thực toàn phần':'Nhật thực hình khuyên'):d-rp<=RE?'Nhật thực một phần':'Không có nhật thực',ru2=RE-dem*(RS-RE)/DS,rp2=RE+dem*(RS+RE)/DS,fu=ovl(ru2,RM,d)/(Math.PI*RM*RM),fp=ovl(rp2,RM,d)/(Math.PI*RM*RM),ty2=fu>.999?'Nguyệt thực toàn phần':fu>0?'Nguyệt thực một phần':fp>0?'Nguyệt thực nửa tối':'Không có nguyệt thực';return{Lu,ru,rp,ty,ru2,rp2,fu,fp,ty2,ra:(RM/dem)/(RS/Dsm)}},
+ info(s,p){const c=EX.eclipse.calc(p);if(p.mode==0)return[['Kết quả',c.ty],['Chiều dài chóp bóng tối',f(c.Lu,1)+' nghìn km'],['Bán kính bóng tối tại Trái Đất',(c.ru>0?f(c.ru,2):'< 0 (không chạm tới)')+' nghìn km'],['Bán kính bán dạ tại Trái Đất',f(c.rp,2)+' nghìn km'],['Khoảng cách Trái Đất – Mặt Trăng',p.dem+' nghìn km'],['Đường kính biểu kiến Mặt Trăng / Mặt Trời',f(c.ra,3)+(c.ra>1?' (> 1: che kín)':' (< 1: còn viền sáng)')]];
+  return[['Kết quả',c.ty2],['Bán kính bóng tối tại Mặt Trăng',f(c.ru2,2)+' nghìn km'],['Bán kính bán dạ tại Mặt Trăng',f(c.rp2,2)+' nghìn km'],['Mặt Trăng trong bóng tối',f(c.fu*100,0)+'%'],['Mặt Trăng trong bán dạ',f(c.fp*100,0)+'%'],['Độ lệch của Mặt Trăng',f(p.off,2)+' nghìn km']]},
+ draw(s,p){const c=EX.eclipse.calc(p),sL=Math.min(5.96,H*.45/20),sA=.596*Math.min(1,W/820),cy=H/2,Rp=Math.max(4,RM*sL),Ep=RE*sL,FG=col('--fg');
+  const poly=(x0,y0,w0,x1,w1,k)=>{cx.fillStyle=k;cx.beginPath();cx.moveTo(x0,y0-w0);cx.lineTo(x1,y0-w1);cx.lineTo(x1,y0+w1);cx.lineTo(x0,y0+w0);cx.closePath();cx.fill()};
+  cx.font='13px system-ui';
+  if(p.mode==0){const xm=W*.2,xe=xm+p.dem*sA,my=cy+p.off*sL,xEnd=Math.min(W,xe+110),A=x=>(x-xm)/sA;
+   for(let i=-3;i<=3;i++)ln(0,cy+i*38,xm-Rp-4,cy+i*38,'#fbbf24',1.3);cx.fillStyle='#d97706';cx.fillText('Ánh sáng Mặt Trời →',6,cy-130);
+   poly(xm,my,Rp,xEnd,(RM+A(xEnd)*(RS+RM)/(DS-p.dem))*sL,'rgba(30,41,59,.2)');
+   const xa=xm+c.Lu*sA,xu=Math.min(xa,xEnd);poly(xm,my,Rp,xu,RM*(1-A(xu)/c.Lu)*sL,'rgba(15,23,42,.55)');
+   if(xa<xEnd){cx.strokeStyle='rgba(15,23,42,.5)';cx.setLineDash([4,4]);const wv=RM*(A(xEnd)/c.Lu-1)*sL;ln(xa,my,xEnd,my-wv,'rgba(15,23,42,.5)',1.3);ln(xa,my,xEnd,my+wv,'rgba(15,23,42,.5)',1.3);cx.setLineDash([])}
+   cx.fillStyle='#3b82f6';cx.beginPath();cx.arc(xe,cy,Ep,0,7);cx.fill();cx.strokeStyle=FG;cx.lineWidth=1.5;cx.stroke();sph(xm,my,Rp,'#9ca3af');
+   cx.fillStyle=FG;cx.fillText('Mặt Trăng',xm-24,my-Rp-8);cx.fillText('Trái Đất',xe-20,cy+Ep+16);cx.fillStyle=col('--mute');cx.fillText('bóng tối (umbra)',xm+8,my+Rp+22);cx.fillText('bán dạ (penumbra)',xm+8,my-(RM+A(xm+60)*(RS+RM)/(DS-p.dem))*sL-6)}
+  else{const xe=W*.18,xm=xe+p.dem*sA,my=cy+p.off*sL,xEnd=W-8,A=x=>(x-xe)/sA;
+   for(let i=-3;i<=3;i++)ln(0,cy+i*38,xe-Ep-4,cy+i*38,'#fbbf24',1.3);cx.fillStyle='#d97706';cx.fillText('Ánh sáng Mặt Trời →',6,cy-130);
+   poly(xe,cy,Ep,xEnd,(RE+A(xEnd)*(RS+RE)/DS)*sL,'rgba(30,41,59,.2)');poly(xe,cy,Ep,xEnd,Math.max(0,(RE-A(xEnd)*(RS-RE)/DS)*sL),'rgba(15,23,42,.5)');
+   cx.fillStyle='#3b82f6';cx.beginPath();cx.arc(xe,cy,Ep,0,7);cx.fill();cx.strokeStyle=FG;cx.lineWidth=1.5;cx.stroke();
+   const k=c.fu>0?mixc('#d1d5db',c.fu,false):mixc('#d1d5db',c.fp*.35,false);sph(xm,my,Rp,c.fu>0?mixc('#c2410c',1-c.fu*.7,false):'#d1d5db');
+   cx.fillStyle=FG;cx.fillText('Trái Đất',xe-20,cy+Ep+16);cx.fillText('Mặt Trăng',xm-24,my-Rp-8);cx.fillStyle=col('--mute');cx.fillText('bóng tối',xe+Ep+10,cy-6);cx.fillText('bán dạ',xe+Ep+10,cy-(RE+A(xe+Ep+60)*(RS+RE)/DS)*sL+0)}
+  cx.fillStyle=FG;cx.font='bold 16px system-ui';cx.fillText(p.mode==0?c.ty:c.ty2,10,22);cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Hình không theo tỉ lệ: phương ngang nén 10 lần',10,H-12)}},
+
+tide:{name:'🌊 Thủy triều',tw:()=>72,tu:' giờ',
+ desc:'Lực hấp dẫn của Mặt Trăng (và một phần của Mặt Trời) làm nước biển dâng lên ở hai phía của Trái Đất – phía gần và phía xa Mặt Trăng – nên mỗi ngày có hai lần triều cao (chu kỳ ≈ 12 giờ 25 phút). Khi Mặt Trời, Trái Đất, Mặt Trăng thẳng hàng (sóc, vọng) hai tác dụng cộng lại thành triều cường; khi vuông góc (thượng, hạ huyền) chúng triệt tiêu một phần nên là triều kém. Chấm đỏ là người quan sát quay cùng Trái Đất. Hình không theo tỉ lệ.',
+ params:[['age','Tuổi Mặt Trăng (ngày)',0,29.5,.5,0],['sp','Tốc độ (giờ/giây)',1,12,1,4]],
+ gl:'Mực nước tại vị trí quan sát (tương đối), theo giờ',
+ reset(p){return{t:0,h:0,fo:0,e:0}},
+ step(s,p,dt){s.t+=dt*p.sp;s.e=2*Math.PI*(p.age+s.t/24)/29.53;s.fo=2*Math.PI*s.t/24;s.h=(.54*Math.cos(2*(s.fo-s.e))+.25*Math.cos(2*s.fo))/.79},
+ val:s=>s.h,
+ info(s,p){const e=2*Math.PI*(p.age+s.t/24)/29.53,c2=Math.cos(2*e),amp=Math.sqrt(.54*.54+.25*.25+2*.54*.25*c2)/.79,i=Math.floor(((e/(2*Math.PI))%1)*8+.5)%8;return[['Tuổi Mặt Trăng',f((p.age+s.t/24)%29.53,1)+' ngày'],['Pha',MPN[i]],['Loại thủy triều',Math.abs(c2)>.8?'Triều cường':Math.abs(c2)<.3?'Triều kém':'Trung bình'],['Biên độ triều tối đa (tương đối)',f(amp,2)],['Mực nước hiện tại',f(s.h,2)],['Thời gian',f(s.t,1)+' giờ'],['Số lần triều cao / ngày','2 (chu kỳ ≈ 12 h 25 min)']]},
+ draw(s,p){const ex=W*.34,ey=H/2,R=Math.min(W*.2,H*.26),pm=s.e,po=s.fo,pt=(x,y)=>[ex+x,ey-y];
+  cx.fillStyle='#38bdf8';cx.globalAlpha=.65;cx.beginPath();for(let i=0;i<=90;i++){const a=i*Math.PI/45,r=R*(1+.22*(.54*Math.cos(2*(a-pm))+.25*Math.cos(2*a))/.79),q=pt(r*Math.cos(a),r*Math.sin(a));i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.fill();cx.globalAlpha=1;
+  cx.fillStyle='#16a34a';cx.beginPath();cx.arc(ex,ey,R,0,7);cx.fill();cx.fillStyle='#15803d';cx.beginPath();cx.ellipse(ex-R*.25+Math.cos(po)*R*.1,ey-R*.2,R*.35,R*.22,po,0,7);cx.fill();
+  const sx=W*.9,sy=ey;ln(ex+R*1.3,ey,sx-30,sy,col('--line'),1.2);const g=cx.createRadialGradient(sx,sy,3,sx,sy,34);g.addColorStop(0,'#fff7ae');g.addColorStop(.4,'#fbbf24');g.addColorStop(1,'rgba(251,191,36,0)');cx.fillStyle=g;cx.beginPath();cx.arc(sx,sy,34,0,7);cx.fill();sph(sx,sy,16,'#f59e0b');
+  const mR=R*2.1,mq=pt(mR*Math.cos(pm),mR*Math.sin(pm));litBody(mq[0],mq[1],Math.max(8,R*.16),0,'#e5e7eb','#475569');
+  const oq=pt((R+6)*Math.cos(po),(R+6)*Math.sin(po));cx.fillStyle='#dc2626';cx.beginPath();cx.arc(oq[0],oq[1],5,0,7);cx.fill();
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Mặt Trời →',sx-40,sy+50);cx.fillText('Mặt Trăng',mq[0]+12,mq[1]+4);cx.fillStyle='#dc2626';cx.fillText('Người quan sát',oq[0]+8,oq[1]-8);cx.fillStyle='#0284c7';cx.fillText('Nước biển (độ dâng được phóng đại)',10,H-12)}},
+
+standing:{name:'🎸 Sóng dừng trên dây',nog:true,
+ desc:'Sóng tới và sóng phản xạ giao thoa tạo ra sóng dừng: các nút đứng yên, các bụng dao động với biên độ lớn nhất, khoảng cách giữa hai nút liên tiếp là λ/2. Dây hai đầu cố định: <code>L = n·{λ|2}</code>, <code>f = {nv|2L}</code>. Dây một đầu cố định, một đầu tự do: <code>L = (2n − 1)·{λ|4}</code>, <code>f = {(2n − 1)v|4L}</code>. Chuyển động được làm chậm lại để dễ quan sát.',
+ params:[['n','Số bậc hài n',1,8,1,3],['A','Biên độ bụng A (cm)',1,5,.5,3],['v','Tốc độ truyền sóng v (m/s)',20,200,5,80],['L','Chiều dài dây L (m)',.5,2,.05,1],['end','Điều kiện biên',0,1,1,0],['view','Hiển thị',0,1,1,0]],
+ reset(p){return{t:0}},step(s,p,dt){s.t+=dt},val:()=>0,
+ lam(p){return p.end?4*p.L/(2*p.n-1):2*p.L/p.n},
+ info(s,p){const l=EX.standing.lam(p),fr=p.v/l;return[['Bước sóng λ',f(l,3)+' m'],['Tần số f',f(fr,1)+' Hz'],['Khoảng cách hai nút liên tiếp λ/2',f(l/2,3)+' m'],['Số nút (kể cả đầu cố định)',p.end?p.n:p.n+1],['Số bụng',p.n],['Điều kiện biên',p.end?'Một đầu cố định, một đầu tự do':'Hai đầu cố định'],['Tần số cơ bản f₁',f(p.end?p.v/(4*p.L):p.v/(2*p.L),1)+' Hz']]},
+ draw(s,p){const x0=50,x1=W-50,w=x1-x0,cy=H/2,l=EX.standing.lam(p),k=2*Math.PI/l,ph=2*Math.PI*(.5+.15*p.n)*s.t,ap=Math.min(15,(H*.36)/5)*p.A/1,X=x=>x0+x/p.L*w,yy=(x,a,sg)=>cy-a*ap/ (p.A)*Math.sin(k*x+sg*ph)*p.A/ p.A;
+  const A0=Math.min(14,(H*.34)/5)*p.A;ln(x0,cy,x1,cy,col('--line'),1);
+  const curve=(fn,k2,wd)=>{cx.strokeStyle=k2;cx.lineWidth=wd;cx.beginPath();for(let i=0;i<=240;i++){const x=p.L*i/240,y=cy-fn(x);i?cx.lineTo(X(x),y):cx.moveTo(X(x),y)}cx.stroke()};
+  if(p.view){curve(x=>A0/2*Math.sin(k*x-ph),'#2563eb',1.5);curve(x=>A0/2*Math.sin(k*x+ph),'#dc2626',1.5)}
+  curve(x=>A0*Math.sin(k*x)*Math.cos(ph),col('--fg'),3);
+  for(let m=0;m*l/2<=p.L+1e-6;m++){const q=X(m*l/2);cx.fillStyle='#16a34a';cx.beginPath();cx.arc(q,cy,5,0,7);cx.fill()}
+  for(let m=0;(m+.5)*l/2<=p.L+1e-6;m++){const q=X((m+.5)*l/2);cx.fillStyle='#f59e0b';cx.beginPath();cx.arc(q,cy-A0*Math.sin(k*(m+.5)*l/2)*Math.cos(ph),4,0,7);cx.fill()}
+  cx.fillStyle=col('--mute');cx.fillRect(x0-8,cy-40,8,80);if(p.end){ln(x1,cy-50,x1,cy+50,col('--mute'),3);cx.strokeStyle=col('--fg');cx.lineWidth=2;cx.beginPath();cx.arc(x1,cy-A0*Math.sin(k*p.L)*Math.cos(ph),5,0,7);cx.stroke()}else cx.fillRect(x1,cy-40,8,80);
+  cx.font='12px system-ui';cx.fillStyle='#16a34a';cx.fillText('● nút',x0,H-12);cx.fillStyle='#f59e0b';cx.fillText('● bụng',x0+50,H-12);cx.fillStyle=col('--mute');cx.fillText(p.view?'Xanh dương: sóng tới · Đỏ: sóng phản xạ · Đen: sóng dừng':'Sóng dừng = sóng tới + sóng phản xạ',x0+110,H-12)}}
+});
+Object.assign(OPT,{solar3d:{sel:{l:'Hành tinh khảo sát',o:['Thủy','Kim','T.Đất','Hỏa','Mộc','Thổ','Thiên','Hải']},orb:{l:'Quỹ đạo',o:['Ẩn','Hiện']},lab:{l:'Nhãn tên',o:['Ẩn','Hiện']}},eclipse:{mode:{l:'Loại hiện tượng',o:['Nhật thực','Nguyệt thực']}},standing:{end:{l:'Điều kiện biên',o:['Hai đầu cố định','Một đầu tự do']},view:{l:'Hiển thị',o:['Sóng dừng','Sóng tới & phản xạ']}}});
+
+// ===== Chemistry: galvanic cell, electrolysis; Biology: starch formation & digestion =====
+const GP=[['Zn','Cu',-.76,.34,'Zn²⁺','Cu²⁺',1,'#94a3b8','#b45309','rgba(226,232,240,.3)','rgba(59,130,246,.45)',65.38,63.55,2],['Fe','Cu',-.44,.34,'Fe²⁺','Cu²⁺',1,'#6b7280','#b45309','rgba(134,239,172,.3)','rgba(59,130,246,.45)',55.85,63.55,2],['Cu','Ag',.34,.8,'Cu²⁺','Ag⁺',2,'#b45309','#e5e7eb','rgba(59,130,246,.45)','rgba(226,232,240,.3)',63.55,107.87,1],['Zn','Ag',-.76,.8,'Zn²⁺','Ag⁺',2,'#94a3b8','#e5e7eb','rgba(226,232,240,.3)','rgba(226,232,240,.3)',65.38,107.87,1],['Mg','Cu',-2.37,.34,'Mg²⁺','Cu²⁺',1,'#cbd5e1','#b45309','rgba(226,232,240,.3)','rgba(59,130,246,.45)',24.31,63.55,2]];
+const ES=[{n:'CuCl₂',c:'Cu²⁺ + 2e⁻ → Cu',a:'2Cl⁻ → Cl₂ + 2e⁻',el:'#374151',col:'rgba(34,197,94,.35)',gc:'Cu',ga:'Cl₂',note:'Cu bám vào catot, khí Cl₂ thoát ra ở anot.'},{n:'NaCl',c:'2H₂O + 2e⁻ → H₂ + 2OH⁻',a:'2Cl⁻ → Cl₂ + 2e⁻',el:'#374151',col:'rgba(226,232,240,.3)',gc:'H₂',ga:'Cl₂',note:'Điện phân dung dịch NaCl có màng ngăn: V(H₂) = V(Cl₂); dung dịch sau điện phân chứa NaOH (bazơ).'},{n:'H₂O (Na₂SO₄)',c:'2H₂O + 2e⁻ → H₂ + 2OH⁻',a:'2H₂O → O₂ + 4H⁺ + 4e⁻',el:'#374151',col:'rgba(226,232,240,.3)',gc:'H₂',ga:'O₂',note:'Thực chất là điện phân nước: V(H₂) : V(O₂) = 2 : 1.'},{n:'CuSO₄ (cực Cu)',c:'Cu²⁺ + 2e⁻ → Cu',a:'Cu → Cu²⁺ + 2e⁻',el:'#b45309',col:'rgba(59,130,246,.45)',gc:'Cu',ga:'Cu',note:'Anot tan: Cu ở anot tan ra, Cu bám vào catot – dùng để tinh chế đồng.'}];
+Object.assign(EX,{
+galv:{name:'🔋 Pin điện hóa (pin Daniell)',nog:true,
+ desc:'Pin điện hóa biến hóa năng thành điện năng nhờ phản ứng oxi hóa – khử: kim loại hoạt động hơn (anot, cực âm) nhường electron, electron chạy qua dây dẫn sang catot (cực dương) để khử ion kim loại. Cầu muối nối hai dung dịch, trung hòa điện tích bằng sự di chuyển của các ion. Sức điện động tiêu chuẩn <code>E° = E°_catot − E°_anot</code>; ở nồng độ bất kỳ (phương trình Nernst) <code>E = E° − {0,0592|2}·lg Q</code>.',
+ params:[['pair','Cặp điện cực (anot – catot)',0,4,1,0],['ca','Nồng độ ion ở anot (mol/L)',.01,2,.01,1],['cc','Nồng độ ion ở catot (mol/L)',.01,2,.01,1],['R','Điện trở mạch ngoài R (Ω)',5,100,1,20]],
+ calc(p){const g=GP[p.pair],E0=g[3]-g[2],Q=p.ca/Math.pow(p.cc,g[6]),E=E0-.0296*Math.log10(Q),I=E/(p.R+2);return{g,E0,E,I}},
+ reset(p){return{t:0,ph:0,q:0}},
+ step(s,p,dt){const c=EX.galv.calc(p);s.t+=dt;s.ph+=Math.min(1.6,c.I*14)*dt;s.q+=c.I*dt*300},
+ val:()=>0,
+ info(s,p){const c=EX.galv.calc(p),g=c.g,F=96485,dm=s.q/(2*F)*g[11]*1000,dc=s.q/F*g[13]*(g[13]==2?1:1)/(g[13]==2?1:1);const ca=g[6]==1?s.q/(2*F)*g[12]*1000:s.q/F*g[12]*1000;
+  return[['Anot (−)',g[0]+' → '+g[4]+' + 2e⁻'],['Catot (+)',g[6]==1?g[5]+' + 2e⁻ → '+g[1]:'2'+g[5]+' + 2e⁻ → 2'+g[1]],['E° của pin',f(c.E0,2)+' V'],['Sức điện động E (Nernst)',f(c.E,3)+' V'],['Dòng điện I',f(c.I*1000,1)+' mA'],['Hiệu điện thế hai cực',f(c.E-c.I*2,3)+' V'],['Khối lượng anot giảm',f(dm,1)+' mg'],['Khối lượng catot tăng',f(ca,1)+' mg'],['Chiều electron','Anot → dây dẫn → catot']]},
+ draw(s,p){const c=EX.galv.calc(p),g=c.g,bw=Math.min(160,W*.27),bh=H*.4,by=H*.5,xa=W*.27,xc=W*.73,FG=col('--fg'),wear=1-Math.exp(-s.q/9000),dep=1-Math.exp(-s.q/9000),ytop=by-bh*.1,wy=H*.16,sb=H*.34;
+  [[xa,g[9],g[0],g[4],p.ca],[xc,g[10],g[1],g[5],p.cc]].forEach(([x,sol,m,ion,cc],i)=>{cx.fillStyle=sol;cx.fillRect(x-bw/2,by+bh*.18,bw,bh*.82);cx.strokeStyle=FG;cx.lineWidth=3;cx.beginPath();cx.moveTo(x-bw/2,by);cx.lineTo(x-bw/2,by+bh);cx.lineTo(x+bw/2,by+bh);cx.lineTo(x+bw/2,by);cx.stroke();
+   const ew=i?18*(1+dep*.9):18*(1-wear*.55),ec=i?g[8]:g[7];cx.fillStyle=ec;cx.fillRect(x-ew/2,wy+30,ew,by+bh-wy-40);cx.strokeStyle=FG;cx.lineWidth=1.2;cx.strokeRect(x-ew/2,wy+30,ew,by+bh-wy-40);
+   cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.textAlign='center';cx.fillText(ion+'  '+f(cc,2)+' M',x,by+bh+16);cx.fillStyle=FG;cx.font='bold 13px system-ui';cx.fillText((i?'Catot (+) ':'Anot (−) ')+m,x,by+bh+34);cx.textAlign='left'});
+  cx.strokeStyle='#cbd5e1';cx.lineWidth=14;cx.lineJoin='round';cx.beginPath();cx.moveTo(xa+bw*.25,by+bh*.4);cx.lineTo(xa+bw*.25,sb);cx.lineTo(xc-bw*.25,sb);cx.lineTo(xc-bw*.25,by+bh*.4);cx.stroke();cx.strokeStyle=col('--card');cx.lineWidth=9;cx.stroke();
+  cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.textAlign='center';cx.fillText('Cầu muối (KNO₃)',W/2,sb-14);cx.textAlign='left';
+  const path=[[xa,wy+30],[xa,wy],[xc,wy],[xc,wy+30]],tl=[0,30,30+Math.abs(xc-xa),60+Math.abs(xc-xa)],L=tl[3];cx.strokeStyle=FG;cx.lineWidth=2;cx.beginPath();cx.moveTo(path[0][0],path[0][1]);path.slice(1).forEach(q=>cx.lineTo(q[0],q[1]));cx.stroke();
+  cx.fillStyle=col('--card');cx.fillRect(W/2-34,wy-14,68,28);cx.strokeStyle=FG;cx.strokeRect(W/2-34,wy-14,68,28);cx.fillStyle=FG;cx.font='bold 12px system-ui';cx.textAlign='center';cx.fillText('E = '+f(c.E,2)+' V',W/2,wy+4);cx.textAlign='left';
+  for(let i=0;i<14;i++){const d=((i/14+s.ph)%1)*L;let x,y;if(d<30){x=xa;y=wy+30-d}else if(d<30+Math.abs(xc-xa)){x=xa+(d-30);y=wy}else{x=xc;y=wy+(d-30-Math.abs(xc-xa))}if(Math.abs(x-W/2)<36&&Math.abs(y-wy)<16)continue;cx.fillStyle='#2563eb';cx.beginPath();cx.arc(x,y,3.2,0,7);cx.fill()}
+  cx.fillStyle='#2563eb';cx.font='12px system-ui';cx.fillText('e⁻ →',W/2-14,wy-22);
+  for(let i=0;i<5;i++){const u=(i/5+s.ph*.15)%1;cx.fillStyle='#dc2626';cx.fillText('+',xa+bw*.25+u*(xc-xa-bw*.5)-3,sb+4);cx.fillStyle='#2563eb';cx.fillText('−',xc-bw*.25-((u+.3)%1)*(xc-xa-bw*.5)-3,sb+4)}
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Cation (+) đi sang catot, anion (−) đi sang anot qua cầu muối',10,H-10)}},
+
+electro:{name:'⚡ Bình điện phân',nog:true,
+ desc:'Bình điện phân biến điện năng thành hóa năng: dòng điện một chiều làm ion di chuyển về các điện cực – cation về catot (cực âm, xảy ra sự khử), anion về anot (cực dương, xảy ra sự oxi hóa). Theo định luật Faraday, lượng chất sinh ra tỉ lệ với điện lượng: <code>m = {A·I·t|n·F}</code> (F = 96485 C/mol); 1 mol khí ở đktc chiếm 22,4 L. 1 giây mô phỏng = 5 phút điện phân.',
+ params:[['sys','Dung dịch điện phân',0,3,1,0],['I','Cường độ dòng điện I (A)',.5,5,.5,2]],
+ calc(s,p){const e=ES[p.sys],tm=s.t*5,Q=p.I*tm*60,ne=Q/96485,gas=e.gc=='Cu'?0:ne/2*22.4*1000,ga=e.ga=='Cl₂'?ne/2*22.4*1000:e.ga=='O₂'?ne/4*22.4*1000:0,mCu=ne/2*63.55*1000;return{e,tm,Q,ne,gas,ga,mCu}},
+ reset(p){return{t:0}},step(s,p,dt){s.t+=dt},val:()=>0,
+ info(s,p){const c=EX.electro.calc(s,p),e=c.e,pc=e.gc=='Cu'?f(c.mCu,1)+' mg Cu':f(c.gas,0)+' mL '+e.gc,pa=e.ga=='Cu'?'Tan '+f(c.mCu,1)+' mg Cu':f(c.ga,0)+' mL '+e.ga;return[['Dung dịch',e.n],['Catot (−)',e.c],['Anot (+)',e.a],['Thời gian (ảo)',f(c.tm,1)+' phút'],['Điện lượng Q = It',f(c.Q,0)+' C'],['Số mol electron',f(c.ne*1000,2)+' mmol'],['Sản phẩm ở catot',pc],['Sản phẩm ở anot',pa],['Ghi chú',e.note]]},
+ draw(s,p){const c=EX.electro.calc(s,p),e=c.e,FG=col('--fg'),bw=Math.min(300,W*.55),bx=(W-bw)/2,by=H*.42,bh=H*.48,xc=bx+bw*.25,xa=bx+bw*.75,top=by-bh*.55;
+  cx.fillStyle=e.col;cx.fillRect(bx,by+bh*.1,bw,bh*.9);cx.strokeStyle=FG;cx.lineWidth=3;cx.beginPath();cx.moveTo(bx,by);cx.lineTo(bx,by+bh);cx.lineTo(bx+bw,by+bh);cx.lineTo(bx+bw,by);cx.stroke();
+  const bt=H*.1;cx.fillStyle=col('--card');cx.fillRect(W/2-44,bt-12,88,26);cx.strokeStyle=FG;cx.lineWidth=2;cx.strokeRect(W/2-44,bt-12,88,26);cx.fillStyle=FG;cx.font='bold 14px system-ui';cx.textAlign='center';cx.fillText('−',W/2-28,bt+6);cx.fillText('+',W/2+28,bt+6);cx.font='11px system-ui';cx.fillText('nguồn 1 chiều',W/2,bt+26);cx.textAlign='left';
+  ln(W/2-44,bt,xc,bt,FG,2);ln(xc,bt,xc,top+10,FG,2);ln(W/2+44,bt,xa,bt,FG,2);ln(xa,bt,xa,top+10,FG,2);
+  const grow=Math.min(1,c.mCu/400),sh=Math.min(1,c.mCu/400);
+  const elec=(x,iscat)=>{let w=16;if(e.gc=='Cu'&&e.ga!='Cu'&&iscat)w=16+grow*14;if(e.ga=='Cu'&&iscat)w=16+grow*14;if(e.ga=='Cu'&&!iscat)w=16-sh*7;cx.fillStyle=e.el;cx.fillRect(x-w/2,top+10,w,by+bh-top-30);cx.strokeStyle=FG;cx.lineWidth=1;cx.strokeRect(x-w/2,top+10,w,by+bh-top-30);if(iscat&&e.gc=='Cu'){cx.fillStyle='#b45309';cx.fillRect(x-w/2-1,by+bh*.25,w+2,by+bh-by-bh*.25-22)}};
+  elec(xc,true);elec(xa,false);
+  const tube=(x,v,k,lab)=>{if(!lab)return;const tw=34,tt=by-bh*.25;cx.strokeStyle=FG;cx.lineWidth=2;cx.strokeRect(x-tw/2,tt-40,tw,bh*.4+40);const fh=Math.min(1,v/150)*(bh*.4+40);cx.fillStyle=k;cx.globalAlpha=.55;cx.fillRect(x-tw/2+1,tt-40+(bh*.4+40)-fh,tw-2,fh);cx.globalAlpha=1;cx.fillStyle=FG;cx.font='bold 12px system-ui';cx.textAlign='center';cx.fillText(lab,x,tt-46);cx.textAlign='left'};
+  if(e.gc!='Cu')tube(xc-28,c.gas,'#38bdf8',e.gc);if(e.ga!='Cu')tube(xa+28,c.ga,e.ga=='Cl₂'?'#a3e635':'#e2e8f0',e.ga);
+  const bub=(x,on)=>{if(!on)return;for(let i=0;i<7;i++){const u=(i/7+s.t*.9)%1;cx.strokeStyle='#e0f2fe';cx.lineWidth=1.3;cx.beginPath();cx.arc(x+Math.sin(i*5+u*6)*7,by+bh-30-u*bh*.6,2+(i%3),0,7);cx.stroke()}};
+  bub(xc+14,e.gc!='Cu');bub(xa-14,e.ga!='Cu');
+  cx.font='bold 12px system-ui';for(let i=0;i<8;i++){const u=(i/8+s.t*.12)%1,y=by+bh*.3+((i*37)%50)/50*bh*.4;cx.fillStyle='#dc2626';cx.fillText('+',xa-12-u*(xa-xc-30),y);cx.fillStyle='#2563eb';cx.fillText('−',xc+12+((u+.4)%1)*(xa-xc-30),y+10)}
+  cx.fillStyle=FG;cx.textAlign='center';cx.font='bold 13px system-ui';cx.fillText('Catot (−)',xc,by+bh+18);cx.fillText('Anot (+)',xa,by+bh+18);cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText(e.n,W/2,by+bh+36);cx.textAlign='left'}},
+
+photostarch:{name:'🍃 Tạo thành tinh bột ở cây xanh',tw:()=>40,
+ desc:'Trong lục lạp, pha sáng dùng năng lượng ánh sáng để tách nước, giải phóng O₂ và tạo ATP, NADPH; pha tối (chu trình Calvin) dùng ATP, NADPH để cố định CO₂ thành glucozơ. Glucozơ được trùng hợp thành tinh bột và tích lũy thành hạt trong lục lạp. Phương trình: <code>6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</code> rồi <code>nC₆H₁₂O₆ → (C₆H₁₀O₅)ₙ + nH₂O</code>. Nhỏ dung dịch iot: lá có tinh bột hóa xanh tím.',
+ params:[['L','Cường độ ánh sáng (%)',0,100,5,70],['C','Nồng độ CO₂ (%)',0,100,5,60],['iod','Thử tinh bột bằng dung dịch iot',0,1,1,0]],
+ gl:'Glucozơ trong tế bào (xanh dương) và tinh bột tích lũy (đỏ), đơn vị tùy ý',
+ rate(p){return 2*(p.L/(p.L+25))*(p.C/(p.C+20))},
+ reset(p){return{t:0,G:0,St:0}},
+ step(s,p,dt){const r=EX.photostarch.rate(p);s.t+=dt;s.G+=(r-.35*s.G)*dt;s.St+=.35*s.G*.9*dt},
+ val:s=>[s.G,s.St],
+ info(s,p){const r=EX.photostarch.rate(p);return[['Tốc độ tạo glucozơ',f(r,2)+' đơn vị/s'],['Glucozơ trong tế bào',f(s.G,2)],['Tinh bột tích lũy',f(s.St,2)],['Số hạt tinh bột trong lục lạp',Math.min(14,Math.floor(s.St*1.2))],['Khí O₂ thoát ra',r>.05?'Có':'Không'],['Kết quả thử iot',p.iod?(s.St>.5?'Xanh tím (có tinh bột)':'Vàng nâu (chưa có tinh bột)'):'Chưa thử']]},
+ draw(s,p){const cxl=W*.3,cyl=H*.55,rx=Math.min(130,W*.24),ry=rx*.58,I=p.L/100,r=EX.photostarch.rate(p),FG=col('--fg');
+  cx.fillStyle='#fde047';cx.globalAlpha=.3+.7*I;cx.beginPath();cx.arc(40,40,16+8*I,0,7);cx.fill();cx.globalAlpha=1;
+  for(let i=0;i<4;i++){const u=(i/4+s.t*.4)%1,x=50+u*(cxl-60),y=50+u*(cyl-ry-40);cx.globalAlpha=.25+.75*I;ln(x,y,x+10,y+10,'#f59e0b',2);cx.globalAlpha=1}
+  cx.fillStyle='rgba(34,197,94,.25)';cx.strokeStyle='#15803d';cx.lineWidth=4;cx.beginPath();cx.ellipse(cxl,cyl,rx,ry,0,0,7);cx.fill();cx.stroke();cx.lineWidth=1.5;cx.beginPath();cx.ellipse(cxl,cyl,rx-6,ry-6,0,0,7);cx.stroke();
+  for(let g=0;g<3;g++)for(let k=0;k<4;k++){cx.fillStyle='#16a34a';cx.fillRect(cxl-rx*.55+g*rx*.32,cyl-ry*.2-k*5+ry*.25,rx*.22,3.5)}
+  const n=Math.min(14,Math.floor(s.St*1.2));for(let i=0;i<n;i++){const a=i*2.4,rr=.35+.5*((i*7)%10)/10,x=cxl+rx*.55*rr*Math.cos(a)+rx*.3,y=cyl+ry*.6*rr*Math.sin(a);cx.fillStyle='#fff';cx.strokeStyle='#64748b';cx.lineWidth=1;cx.beginPath();cx.ellipse(x,y,7,5,0,0,7);cx.fill();cx.stroke()}
+  cx.font='bold 13px system-ui';cx.fillStyle='#16a34a';cx.fillText('Lục lạp',cxl-24,cyl+ry+22);cx.font='12px system-ui';cx.fillStyle=col('--mute');cx.fillText('hạt tinh bột',cxl+rx*.35,cyl-ry-8);cx.fillText('grana (pha sáng)',cxl-rx*.95,cyl-ry*.55);
+  for(let i=0;i<Math.round(p.C/25);i++){const u=(i/4+s.t*.3)%1;cx.fillStyle=FG;cx.fillText('CO₂',10+u*(cxl-rx-20),cyl-12)}
+  for(let i=0;i<3;i++){const u=(i/3+s.t*.3)%1;cx.fillStyle='#0284c7';cx.fillText('H₂O',cxl-14,H-8-u*(H-8-cyl-ry))}
+  if(r>.05)for(let i=0;i<3;i++){const u=(i/3+s.t*.3)%1;cx.fillStyle='#dc2626';cx.fillText('O₂',cxl+rx*.6+u*60,cyl-ry-10-u*(cyl-ry-50))}
+  const lx=W*.72,ly=H*.5,lw=Math.min(120,W*.2),k=Math.min(1,s.St/(s.St+5)),lc=p.iod?mixc('#d9a441',k,false).replace('rgb(','').replace(')','').split(',').map(Number):null;
+  cx.fillStyle=p.iod?'rgb('+Math.round(217-(217-30)*k)+','+Math.round(164-(164-27)*k)+','+Math.round(65+(75-65)*k)+')':'#4ade80';cx.strokeStyle='#166534';cx.lineWidth=2;cx.beginPath();cx.moveTo(lx-lw,ly);cx.quadraticCurveTo(lx,ly-lw*.8,lx+lw,ly);cx.quadraticCurveTo(lx,ly+lw*.8,lx-lw,ly);cx.fill();cx.stroke();ln(lx-lw,ly,lx+lw,ly,'#166534',1.5);
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.textAlign='center';cx.fillText(p.iod?'Lá sau khi nhỏ dung dịch iot':'Lá (chưa thử iot)',lx,ly+lw*.8+18);cx.textAlign='left';cx.fillText('6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂ → tinh bột',10,H-8)}},
+
+digest:{name:'🍞 Chuyển hóa tinh bột trong cơ thể',tw:()=>60,
+ desc:'Tinh bột được tiêu hóa dần: ở miệng, amilaza nước bọt cắt tinh bột thành mantozơ (một phần nhỏ); dạ dày có pH ≈ 2 nên amilaza ngừng hoạt động; ở ruột non, amilaza tụy biến tinh bột thành mantozơ rồi maltaza thủy phân mantozơ thành glucozơ. Glucozơ hấp thu vào máu; insulin giúp tế bào lấy glucozơ để hô hấp tạo ATP và dự trữ thừa thành glycogen ở gan và cơ. 1 giây mô phỏng = 4 phút.',
+ params:[['amt','Lượng tinh bột ăn vào (g)',20,150,10,80],['act','Hoạt động của cơ thể',0,1,1,0]],
+ gl:'Đường huyết (xanh dương, mg/dL) và glycogen dự trữ (đỏ, gam × 10)',
+ reset(p){return{t:0,Sm:p.amt,Ss:0,Si:0,M:0,Gl:0,Bl:0,Gy:0,Cn:0,bg:90}},
+ step(s,p,dt){const m=dt*4,a1=.5,a2=.08,a3=.12,a4=.2,a5=.1,u=(p.act?.07:.03)*s.Bl,st=.05*s.Bl*(1+s.Bl/3);let d;
+  d=a1*s.Sm*m;s.Sm-=d;s.Ss+=.9*d;s.M+=.1*d;d=a2*s.Ss*m;s.Ss-=d;s.Si+=d;d=a3*s.Si*m;s.Si-=d;s.M+=d;d=a4*s.M*m;s.M-=d;s.Gl+=d*1.05;d=a5*s.Gl*m;s.Gl-=d;s.Bl+=d;s.Bl-=(u+st)*m;s.Gy+=st*m;s.Cn+=u*m;s.t+=dt;s.bg=90+20*Math.max(0,s.Bl)},
+ val:s=>[s.bg,s.Gy*10],
+ info(s,p){return[['Thời gian',f(s.t*4,0)+' phút'],['Tinh bột ở miệng / dạ dày',f(s.Sm,1)+' / '+f(s.Ss,1)+' g'],['Tinh bột ở ruột non',f(s.Si,1)+' g'],['Mantozơ',f(s.M,1)+' g'],['Glucozơ ở ruột non',f(s.Gl,1)+' g'],['Đường huyết',f(s.bg,0)+' mg/dL'],['Glycogen dự trữ',f(s.Gy,1)+' g'],['Glucozơ đã dùng cho hô hấp',f(s.Cn,1)+' g']]},
+ draw(s,p){const FG=col('--fg'),bw=W*.16,bh=H*.4,y0=H*.18,xs=[.1,.3,.5,.72,.9].map(v=>W*v-bw/2),names=['Miệng','Dạ dày','Ruột non','Máu','Gan, cơ, tế bào'],sub=['amilaza nước bọt','pH ≈ 2, ngừng amilaza','amilaza tụy + maltaza','glucozơ','glycogen · ATP'];
+  const amt=[[s.Sm,0,0],[s.Ss,0,0],[s.Si,s.M,s.Gl],[0,0,Math.max(0,s.Bl)],[0,0,s.Gy]],cl=['#16a34a','#f97316','#eab308'];
+  xs.forEach((x,i)=>{cx.fillStyle=col('--card');cx.fillRect(x,y0,bw,bh);cx.strokeStyle=i==2?'#16a34a':FG;cx.lineWidth=i==2?3:1.5;cx.strokeRect(x,y0,bw,bh);cx.fillStyle=FG;cx.font='bold 12px system-ui';cx.textAlign='center';cx.fillText(names[i],x+bw/2,y0-8);cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.fillText(sub[i],x+bw/2,y0+bh+16);
+   amt[i].forEach((v,k)=>{const n=Math.min(10,Math.ceil(v/8));for(let j=0;j<n;j++){const yy=y0+12+((j+k*3)%5)*(bh/6)+k*6,xx=x+12+(j%2)*bw*.38+k*bw*.15;cx.fillStyle=cl[k];cx.beginPath();if(k==0){cx.arc(xx,yy,5,0,7);cx.arc(xx+9,yy+3,5,0,7)}else cx.arc(xx,yy,k==1?6:5,0,7);cx.fill()}});
+   if(i<4){const fl=[s.Sm>.5,s.Ss>.5,s.Gl>.3||s.Bl>.2,s.Bl>.2][i];const ax=x+bw+4,ay=y0+bh/2;ln(ax,ay,ax+W*.2-bw-8,ay,fl?'#16a34a':col('--line'),3);ah(ax+W*.2-bw-8,ay,0,9,fl?'#16a34a':col('--line'));if(fl)for(let q=0;q<2;q++){const u=(q/2+s.t*.5)%1;cx.fillStyle='#eab308';cx.beginPath();cx.arc(ax+u*(W*.2-bw-12),ay,3.5,0,7);cx.fill()}}});
+  cx.textAlign='left';cx.font='12px system-ui';[['Tinh bột','#16a34a'],['Mantozơ','#f97316'],['Glucozơ','#eab308']].forEach(([n,k],i)=>{cx.fillStyle=k;cx.beginPath();cx.arc(16+i*96,H*.8,6,0,7);cx.fill();cx.fillStyle=col('--mute');cx.fillText(n,28+i*96,H*.8+4)});
+  cx.fillStyle=col('--mute');cx.fillText('Tinh bột —amilaza→ Mantozơ —maltaza→ Glucozơ → hô hấp tế bào / glycogen',10,H-10)}}
+});
+Object.assign(OPT,{galv:{pair:{l:'Cặp điện cực (anot – catot)',o:['Zn–Cu','Fe–Cu','Cu–Ag','Zn–Ag','Mg–Cu']}},electro:{sys:{l:'Dung dịch điện phân',o:['CuCl₂','NaCl','H₂O','CuSO₄']}},photostarch:{iod:{l:'Thử tinh bột bằng dung dịch iot',o:['Chưa thử','Nhỏ iot']}},digest:{act:{l:'Hoạt động của cơ thể',o:['Nghỉ ngơi','Vận động']}}});
+
+// ===== astronomy: seasons, day & night =====
+Object.assign(EX,{
+seasons:{name:'🌍 Bốn mùa',d3:true,tw:()=>365,tu:' ngày',
+ desc:'Trục quay của Trái Đất nghiêng ≈ 23,4° so với pháp tuyến mặt phẳng quỹ đạo và luôn hướng về một phía trong không gian. Vì vậy trong năm, bán cầu Bắc và bán cầu Nam lần lượt nghiêng về phía Mặt Trời nên nhận nhiều hoặc ít ánh sáng hơn, gây ra bốn mùa và làm độ dài ngày thay đổi. Góc xích vĩ của Mặt Trời <code>sinδ = sinε·sinλ</code> (ε: độ nghiêng trục, λ: kinh độ hoàng đạo của Mặt Trời); độ dài ban ngày tại vĩ độ φ: <code>cosH = −tanφ·tanδ</code>, ban ngày = 2H/15° giờ. Đặt độ nghiêng = 0° để thấy không còn mùa. Kéo chuột để xoay góc nhìn.',
+ params:[['sp','Tốc độ (ngày/giây)',1,60,1,12],['lat','Vĩ độ khảo sát (°)',-90,90,1,21],['tilt','Độ nghiêng trục quay (°)',0,45,.5,23.4]],
+ gl:'Độ dài ban ngày tại vĩ độ đã chọn (giờ)',
+ dec(p,t){return Math.asin(Math.sin(rad(p.tilt))*Math.sin(2*Math.PI*t/365.26))},
+ dayl(p,t){const d=EX.seasons.dec(p,t),ph=rad(Math.max(-89.9,Math.min(89.9,p.lat))),c=-Math.tan(ph)*Math.tan(d);return c>=1?0:c<=-1?24:2*Math.acos(c)*12/Math.PI},
+ reset(p){return{t:0,dl:EX.seasons.dayl(p,0)}},
+ step(s,p,dt){s.t+=dt*p.sp;s.dl=EX.seasons.dayl(p,s.t)},
+ val:s=>s.dl,
+ info(s,p){const lam=(s.t%365.26)/365.26*360,d=EX.seasons.dec(p,s.t)*180/Math.PI,dn=(79+s.t)%365.26,mo=[31,28,31,30,31,30,31,31,30,31,30,31];let m=0,dd=Math.floor(dn);while(dd>=mo[m]){dd-=mo[m];m++}const q=Math.floor(lam/90)%4;
+  return[['Ngày trong năm (xấp xỉ)',(dd+1)+'/'+(m+1)],['Kinh độ hoàng đạo Mặt Trời λ',f(lam,0)+'°'],['Góc xích vĩ Mặt Trời δ',f(d,1)+'°'],['Mùa ở bán cầu Bắc',['Xuân','Hè','Thu','Đông'][q]],['Mùa ở bán cầu Nam',['Thu','Đông','Xuân','Hè'][q]],['Độ dài ban ngày (vĩ độ '+p.lat+'°)',s.dl>=24?'24 giờ (ngày địa cực)':s.dl<=0?'0 giờ (đêm địa cực)':f(s.dl,1)+' giờ'],['Độ cao Mặt Trời lúc trưa',f(90-Math.abs(p.lat-d),1)+'°']]},
+ draw(s,p){const u=Math.min(W,H)/420,o={cx:W/2,cy:H/2,yaw:V3.yaw,pitch:V3.pitch+.95,k:.0012,sc:Math.min(W,H)*.36/150},Rr=130,eps=rad(p.tilt),L=2*Math.PI*s.t/365.26+Math.PI,pos=(x,y,z)=>P3(x,y,z,o),FG=col('--fg');
+  cx.strokeStyle=col('--line');cx.lineWidth=1.2;cx.beginPath();for(let i=0;i<=90;i++){const q=pos(Rr*Math.cos(i*Math.PI/45),0,Rr*Math.sin(i*Math.PI/45));i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();
+  const names=[[Math.PI,'Xuân phân (21/3)'],[1.5*Math.PI,'Hạ chí (21/6)'],[0,'Thu phân (23/9)'],[.5*Math.PI,'Đông chí (22/12)']];cx.fillStyle=col('--mute');cx.font='11px system-ui';names.forEach(([a,n])=>{const q=pos(Rr*Math.cos(a),0,Rr*Math.sin(a));cx.beginPath();cx.arc(q[0],q[1],2.5,0,7);cx.fill();cx.fillText(n,q[0]+6,q[1]+(Math.sin(a)>0?14:-6))});
+  const sun=pos(0,0,0),ex=Rr*Math.cos(L),ez=Rr*Math.sin(L),er=pos(ex,0,ez),it=[];
+  it.push({z:0,f:()=>{const r=14*u,g=cx.createRadialGradient(sun[0],sun[1],r*.2,sun[0],sun[1],r*2.4);g.addColorStop(0,'#fff7ae');g.addColorStop(.35,'#fbbf24');g.addColorStop(1,'rgba(251,191,36,0)');cx.fillStyle=g;cx.beginPath();cx.arc(sun[0],sun[1],r*2.4,0,7);cx.fill();sph(sun[0],sun[1],r,'#f59e0b')}});
+  it.push({z:er[2],f:()=>{const r=12*u*er[3],a=Math.atan2(sun[1]-er[1],sun[0]-er[0]),ax=[0,Math.cos(eps),Math.sin(eps)],pn=pos(ex+ax[0]*40,ax[1]*40,ez+ax[2]*40),ps=pos(ex-ax[0]*40,-ax[1]*40,ez-ax[2]*40);litBody(er[0],er[1],r,a,'#3b82f6','#1e3a5f');ln(ps[0],ps[1],pn[0],pn[1],'#dc2626',2);cx.fillStyle='#dc2626';cx.beginPath();cx.arc(pn[0],pn[1],3.5,0,7);cx.fill();cx.fillStyle=FG;cx.font='bold 12px system-ui';cx.fillText('B',pn[0]+6,pn[1]-2);cx.font='12px system-ui';cx.fillText('δ = '+f(EX.seasons.dec(p,s.t)*180/Math.PI,1)+'°',er[0]+r+8,er[1]+16)}});
+  it.sort((a,b)=>a.z-b.z).forEach(x=>x.f());cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Đường đỏ: trục quay (B = cực Bắc) · Nửa sáng quay về phía Mặt Trời',10,H-12)}},
+
+daynight:{name:'🌗 Ngày và đêm',nog:true,
+ desc:'Trái Đất tự quay quanh trục một vòng mỗi 24 giờ (15° mỗi giờ) nên mỗi nơi lần lượt đi qua nửa được chiếu sáng (ban ngày) và nửa tối (ban đêm). Độ dài ngày đêm phụ thuộc vĩ độ và thời điểm trong năm: độ cao Mặt Trời <code>sin h = sinφ·sinδ + cosφ·cosδ·cosH</code> (H: góc giờ), Mặt Trời mọc/lặn khi h = 0, tức <code>cosH = −tanφ·tanδ</code>. Hình trái nhìn từ phía trên cực Bắc (Mặt Trời ở bên phải); chấm đỏ là người quan sát.',
+ params:[['lat','Vĩ độ người quan sát (°)',-90,90,1,10],['day','Ngày trong năm (kể từ 21/3)',0,364,1,92],['sp','Tốc độ (giờ/giây)',1,12,1,3]],
+ reset(p){return{t:0}},step(s,p,dt){s.t+=dt*p.sp},val:()=>0,
+ calc(p,s){const d=Math.asin(Math.sin(rad(23.44))*Math.sin(2*Math.PI*p.day/365.26)),ph=rad(p.lat),T=(6+s.t)%24,H=(T-12)*Math.PI/12,alt=Math.asin(Math.max(-1,Math.min(1,Math.sin(ph)*Math.sin(d)+Math.cos(ph)*Math.cos(d)*Math.cos(H)))),c=-Math.tan(rad(Math.max(-89.9,Math.min(89.9,p.lat))))*Math.tan(d),H0=c>=1?0:c<=-1?Math.PI:Math.acos(c);return{d,ph,T,H,alt,H0,dl:2*H0*12/Math.PI}},
+ info(s,p){const c=EX.daynight.calc(p,s),hh=Math.floor(c.T),mm=Math.floor((c.T-hh)*60),a=c.alt*180/Math.PI;return[['Giờ địa phương (giờ mặt trời)',String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')],['Góc xích vĩ Mặt Trời δ',f(c.d*180/Math.PI,1)+'°'],['Độ cao Mặt Trời',f(a,1)+'°'],['Trạng thái',a>0?'Ban ngày':a>-6?'Chạng vạng':'Ban đêm'],['Độ dài ban ngày',c.dl>=23.99?'24 giờ (ngày địa cực)':c.dl<=.01?'0 giờ (đêm địa cực)':f(c.dl,1)+' giờ'],['Mặt Trời mọc / lặn',c.dl>=23.99||c.dl<=.01?'—':f(12-c.dl/2,1)+' h / '+f(12+c.dl/2,1)+' h'],['Tự quay','360° / 24 giờ = 15° mỗi giờ']]},
+ draw(s,p){const c=EX.daynight.calc(p,s),R=Math.min(W*.22,H*.36),ex=W*.27,ey=H*.5,sin=Math.sin(c.d),FG=col('--fg');
+  cx.fillStyle='#1e3a5f';cx.beginPath();cx.arc(ex,ey,R,0,7);cx.fill();
+  cx.fillStyle='#fde68a';cx.beginPath();for(let i=0;i<=40;i++){const q=i*Math.PI/40;i?cx.lineTo(ex-R*sin*Math.sin(q),ey-R*Math.cos(q)):cx.moveTo(ex-R*sin*Math.sin(q),ey-R*Math.cos(q))}cx.arc(ex,ey,R,Math.PI/2,-Math.PI/2,true);cx.closePath();cx.fill();
+  cx.strokeStyle=FG;cx.lineWidth=2;cx.beginPath();cx.arc(ex,ey,R,0,7);cx.stroke();cx.setLineDash([3,4]);cx.strokeStyle='#64748b';const rho=R*Math.cos(rad(p.lat));cx.beginPath();cx.arc(ex,ey,rho,0,7);cx.stroke();cx.setLineDash([]);
+  const ox=ex+rho*Math.cos(c.H),oy=ey-rho*Math.sin(c.H);cx.fillStyle='#dc2626';cx.beginPath();cx.arc(ox,oy,6,0,7);cx.fill();cx.strokeStyle='#fff';cx.lineWidth=1.5;cx.stroke();
+  for(let i=-2;i<=2;i++)ln(ex+R+14,ey+i*R*.35,ex+R+60,ey+i*R*.35,'#f59e0b',2),ah(ex+R+14,ey+i*R*.35,Math.PI,8,'#f59e0b');cx.fillStyle='#d97706';cx.font='12px system-ui';cx.fillText('Mặt Trời →',ex+R+14,ey-R*.9);cx.fillStyle=col('--mute');cx.fillText('Nhìn từ cực Bắc',ex-40,ey+R+18);cx.fillText('Nửa vàng: ban ngày · Nửa xanh sẫm: ban đêm',10,H-12);if(p.lat<0)cx.fillText('(điểm ở bán cầu Nam nằm ở mặt khuất – vẽ đối xứng)',10,H-28);
+  const cx0=W*.6,cw=W*.36,cy0=H*.24,ch=H*.46,X=t=>cx0+t/24*cw,Y=a=>cy0+ch/2-a/90*ch/2;
+  cx.fillStyle='rgba(30,58,95,.18)';cx.fillRect(cx0,cy0+ch/2,cw,ch/2);cx.strokeStyle=col('--mute');cx.lineWidth=1.5;cx.strokeRect(cx0,cy0,cw,ch);ln(cx0,Y(0),cx0+cw,Y(0),col('--mute'),1.5);
+  cx.strokeStyle='#d97706';cx.lineWidth=2.5;cx.beginPath();for(let i=0;i<=96;i++){const T=i*.25,H2=(T-12)*Math.PI/12,al=Math.asin(Math.max(-1,Math.min(1,Math.sin(c.ph)*Math.sin(c.d)+Math.cos(c.ph)*Math.cos(c.d)*Math.cos(H2))))*180/Math.PI;i?cx.lineTo(X(T),Y(al)):cx.moveTo(X(T),Y(al))}cx.stroke();
+  cx.fillStyle='#dc2626';cx.beginPath();cx.arc(X(c.T),Y(c.alt*180/Math.PI),5,0,7);cx.fill();cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.fillText('Độ cao Mặt Trời (−90° … +90°) theo giờ trong ngày',cx0,cy0-8);cx.fillText('0 h',cx0,cy0+ch+14);cx.fillText('12 h',cx0+cw/2-10,cy0+ch+14);cx.fillText('24 h',cx0+cw-18,cy0+ch+14)}}
+});
 
 let key='proj',P={},S,run=true,speed=1,gh=[];
 function load(k){key=k;const e=EX[k];P={};
@@ -608,7 +1115,7 @@ function load(k){key=k;const e=EX[k];P={};
   d.innerHTML=`<label>${sb(lab)}<b>${sb(sh(df))}</b></label><input type='range' min='${mn}' max='${mx}' step='${st}' value='${df}'>${op?`<div class='tk'>${op.o.map(t=>`<span>${sb(t)}</span>`).join('')}</div>`:''}`;const hl=v=>d.querySelectorAll('.tk span').forEach((q,i)=>{q.className=i==v-mn?'on':''});hl(df);
   d.querySelector('input').oninput=ev=>{P[id]=+ev.target.value;d.querySelector('b').innerHTML=sb(sh(P[id]));hl(P[id]);reset()};
   $('#ctls').appendChild(d)});
- $('#desc').innerHTML=sb(fm(e.desc));gv.style.display=e.nog?'none':'block';reset()}
+ cv.style.touchAction=e.d3?'none':'';$('#desc').innerHTML=sb(fm(e.desc));gv.style.display=e.nog?'none':'block';reset()}
 function reset(){S=EX[key].reset(P);gh=[];S.lh=-1}
 function drawGraph(){const e=EX[key],x=gx;x.clearRect(0,0,W,GH);
  x.fillStyle=col('--bg');x.fillRect(0,0,W,GH);
@@ -620,7 +1127,7 @@ function drawGraph(){const e=EX[key],x=gx;x.clearRect(0,0,W,GH);
  x.lineWidth=2;const cs=['--acc','--acc2','--grn','#d97706'];for(let i=0;i<(gh[0]?gh[0][1].length:1);i++){x.strokeStyle=cs[i][0]=='#'?cs[i]:col(cs[i]);x.beginPath();let st=false;
  gh.forEach(([t,v])=>{if(t<t0)return;st?x.lineTo(X(t),Y(v[i])):x.moveTo(X(t),Y(v[i]));st=true});x.stroke()}
  x.fillStyle=col('--mute');x.font='11px system-ui';mt(x,typeof e.gl=='function'?e.gl(P):e.gl,pad,12);
- x.fillText(f(mx,1),2,22);x.fillText(f(mn,1),2,GH-20);x.fillText('t = '+f(t0,0)+'…'+f(t0+tw,0)+' s',W-110,GH-4)}
+ x.fillText(f(mx,1),2,22);x.fillText(f(mn,1),2,GH-20);x.fillText('t = '+f(t0,0)+'…'+f(t0+tw,0)+(e.tu||' s'),W-110,GH-4)}
 let last=performance.now();
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const e=EX[key];
  if(!inLab){requestAnimationFrame(frame);return}
@@ -632,12 +1139,33 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const e=EX[k
 $('#run').onclick=()=>{run=!run;$('#run').textContent=run?'⏸ Tạm dừng':'▶ Tiếp tục'};
 $('#rst').onclick=reset;
 let mp=null;cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();mp=[e.clientX-r.left,e.clientY-r.top]});cv.addEventListener('pointerleave',()=>{mp=null});
+let drg=null;cv.addEventListener('pointerdown',e=>{if(EX[key]&&EX[key].d3){drg=[e.clientX,e.clientY];try{cv.setPointerCapture(e.pointerId)}catch(_){}}});
+cv.addEventListener('pointermove',e=>{if(drg){V3.yaw+=(e.clientX-drg[0])*.01;V3.pitch=Math.max(-1.4,Math.min(1.4,V3.pitch+(e.clientY-drg[1])*.01));drg=[e.clientX,e.clientY]}});
+cv.addEventListener('pointerup',()=>{drg=null});cv.addEventListener('pointercancel',()=>{drg=null});
+const SY='H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ');
+const NM='Hiđro,Heli,Liti,Beri,Bo,Cacbon,Nitơ,Oxi,Flo,Neon,Natri,Magie,Nhôm,Silic,Photpho,Lưu huỳnh,Clo,Argon,Kali,Canxi,Scandi,Titan,Vanađi,Crom,Mangan,Sắt,Coban,Niken,Đồng,Kẽm,Gali,Gecmani,Asen,Selen,Brom,Krypton,Rubidi,Stronti,Ytri,Zirconi,Niobi,Molipđen,Tecneti,Rutheni,Rođi,Paladi,Bạc,Cadimi,Indi,Thiếc,Antimon,Telu,Iot,Xenon,Xesi,Bari,Lantan,Xeri,Praseođim,Neođim,Prometi,Samari,Europi,Gađolini,Tecbi,Dysprosi,Honmi,Ecbi,Tuli,Ytecbi,Luteti,Hafni,Tantan,Vonfram,Reni,Osmi,Iriđi,Platin,Vàng,Thủy ngân,Tali,Chì,Bitmut,Poloni,Atatin,Radon,Franxi,Rađi,Actini,Thori,Protactini,Urani,Neptuni,Plutoni,Americi,Curi,Beckeli,Californi,Einsteini,Fermi,Mendelevi,Nobeli,Lawrenci,Rutherfordi,Dubni,Seaborgi,Bohri,Hassi,Meitneri,Darmstadti,Roentgeni,Copernixi,Nihoni,Flerovi,Moscovi,Livermori,Tennessin,Oganesson'.split(',');
+const MS='1.008 4.0026 6.94 9.0122 10.81 12.011 14.007 15.999 18.998 20.180 22.990 24.305 26.982 28.085 30.974 32.06 35.45 39.948 39.098 40.078 44.956 47.867 50.942 51.996 54.938 55.845 58.933 58.693 63.546 65.38 69.723 72.630 74.922 78.971 79.904 83.798 85.468 87.62 88.906 91.224 92.906 95.95 98 101.07 102.906 106.42 107.868 112.414 114.818 118.710 121.760 127.60 126.904 131.293 132.905 137.327 138.905 140.116 140.908 144.242 145 150.36 151.964 157.25 158.925 162.500 164.930 167.259 168.934 173.045 174.967 178.49 180.948 183.84 186.207 190.23 192.217 195.084 196.967 200.592 204.38 207.2 208.980 209 210 222 223 226 227 232.038 231.036 238.029 237 244 243 247 247 251 252 257 258 259 266 267 268 269 270 277 278 281 282 285 286 289 290 293 294 294'.split(' ').map(Number);
+const Z_=a=>new Set(a),CS={alk:Z_([3,11,19,37,55,87]),ake:Z_([4,12,20,38,56,88]),hal:Z_([9,17,35,53,85,117]),nob:Z_([2,10,18,36,54,86,118]),nm:Z_([1,6,7,8,15,16,34]),mtl:Z_([5,14,32,33,51,52]),pt:Z_([13,31,49,50,81,82,83,84,113,114,115,116])};
+const catOf=z=>CS.alk.has(z)?0:CS.ake.has(z)?1:CS.hal.has(z)?2:CS.nob.has(z)?3:CS.nm.has(z)?4:CS.mtl.has(z)?5:CS.pt.has(z)?6:(z>=57&&z<=71)?7:(z>=89&&z<=103)?8:9;
+const CATN=['Kim loại kiềm','Kim loại kiềm thổ','Halogen','Khí hiếm','Phi kim','Á kim','Kim loại yếu (sau chuyển tiếp)','Lantanit','Actinit','Kim loại chuyển tiếp'],CATS=['Kiềm','Kiềm thổ','Halogen','Khí hiếm','Phi kim','Á kim','KL yếu','Lantanit','Actinit','Chuyển tiếp'],CATC=['#dc2626','#ea580c','#7c3aed','#db2777','#2563eb','#0d9488','#16a34a','#0891b2','#64748b','#ca8a04'];
+const GAS=Z_([1,2,7,8,9,10,17,18,36,54,86,118]),LIQ=Z_([35,80]),stOf=z=>GAS.has(z)?0:LIQ.has(z)?1:z>=104?3:2,STN=['Khí','Lỏng','Rắn','Chưa xác định'],STC=['#2563eb','#16a34a','#78716c','#94a3b8'];
+const pz=z=>z==1?[0,0]:z==2?[0,17]:z<=4?[1,z-3]:z<=10?[1,z+7]:z<=12?[2,z-11]:z<=18?[2,z-1]:z<=36?[3,z-19]:z<=54?[4,z-37]:z<=56?[5,z-55]:z<=71?[8,z-55]:z<=86?[5,z-69]:z<=88?[6,z-87]:z<=103?[9,z-87]:[6,z-101];
+const radio=z=>z==43||z==61||(z>=84&&z<=89)||z>=93,massStr=z=>radio(z)?'('+MS[z-1]+')':f(MS[z-1],3);
+const ORB=[['1s',2],['2s',2],['2p',6],['3s',2],['3p',6],['4s',2],['3d',10],['4p',6],['5s',2],['4d',10],['5p',6],['6s',2],['4f',14],['5d',10],['6p',6],['7s',2],['5f',14],['6d',10],['7p',6]];
+const EXC={24:{'4s':1,'3d':5},29:{'4s':1,'3d':10},41:{'5s':1,'4d':4},42:{'5s':1,'4d':5},44:{'5s':1,'4d':7},45:{'5s':1,'4d':8},46:{'5s':0,'4d':10},47:{'5s':1,'4d':10},57:{'4f':0,'5d':1},58:{'4f':1,'5d':1},64:{'4f':7,'5d':1},78:{'6s':1,'5d':9},79:{'6s':1,'5d':10},89:{'5f':0,'6d':1},90:{'5f':0,'6d':2},91:{'5f':2,'6d':1},92:{'5f':3,'6d':1},93:{'5f':4,'6d':1},96:{'5f':7,'6d':1},103:{'6d':0,'7p':1}};
+const NOB=[[2,'He',0],[10,'Ne',2],[18,'Ar',4],[36,'Kr',7],[54,'Xe',10],[86,'Rn',14]],SUPN='⁰¹²³⁴⁵⁶⁷⁸⁹';
+function econf(z){let r=z;const c=ORB.map(([o,k])=>{const t=Math.min(k,r);r-=t;return t});ORB.forEach(([o],i)=>{const e=EXC[z];if(e&&o in e)c[i]=e[o]});
+ let core=null;for(const[zn,s,ix]of NOB)if(zn<z)core=[s,ix];const parts=[];for(let i=core?core[1]+1:0;i<ORB.length;i++)if(c[i]>0)parts.push([ORB[i][0],c[i]]);
+ parts.sort((a,b)=>a[0][0]-b[0][0]||'spdf'.indexOf(a[0][1])-'spdf'.indexOf(b[0][1]));
+ return(core?'['+core[0]+']':'')+parts.map(([o,k])=>o+[...String(k)].map(d=>SUPN[d]).join('')).join('')}
+Object.assign(OPT,{fric:{ramp:{l:'Lực kéo',o:['Giữ nguyên','Tăng dần tự động']}},bohr:{Z:{l:'Nguyên tử / ion giống hiđro',o:['H (Z = 1)','He⁺ (Z = 2)','Li²⁺ (Z = 3)']}},ruth:{mode:{l:'Mô hình nguyên tử',o:['Thomson','Rutherford']}},decay:{mode:{l:'Loại phân rã',o:['α','β⁻','γ']}},ptable:{mode:{l:'Tô màu theo',o:['Nhóm nguyên tố','Trạng thái']}}});
+cv.addEventListener('click',e=>{if(key=='ptable'&&PT.hit){const r=cv.getBoundingClientRect(),z=PT.hit(e.clientX-r.left,e.clientY-r.top);if(z)S.sel=z}});
 $('#spd').onchange=e=>speed=+e.target.value;
 addEventListener('resize',()=>{if(inLab)fit()});
 const SUBJ={
- phy:{n:'Vật lý',h:'vat-ly',ic:'⚛️',d:'Cơ học, nhiệt học, điện học, quang học và từ trường.',groups:[['Cơ học',['proj','pend','spr']],['Nhiệt học',['gas','heat','boyle','charles']],['Điện học',['rc','ohm','rlc']],['Quang học',['snell','lens','young']],['Điện từ & từ trường',['magnet','current','ampere','balance','faraday','lorentz']]]},
- hoa:{n:'Hóa học',h:'hoa-hoc',ic:'🧪',d:'Chuẩn độ, tốc độ phản ứng, thang pH và chất chỉ thị.',groups:[['Dung dịch & phản ứng',['titr','rate','phs']]]},
- sinh:{n:'Sinh học',h:'sinh-hoc',ic:'🌿',d:'Quang hợp, thẩm thấu, di truyền Mendel và quần thể.',groups:[['Tế bào & thực vật',['photo','osmo']],['Di truyền & quần thể',['mendel','lv']]]}};
+ phy:{n:'Vật lý',h:'vat-ly',ic:'⚛️',d:'Cơ học, nhiệt học, điện học, quang học và từ trường.',groups:[['Cơ học',['proj','pend','spr','fric','incl','mom','energy']],['Nhiệt học',['gas','heat','boyle','charles']],['Điện học',['rc','ohm','rlc']],['Quang học',['snell','lens','young']],['Điện từ & từ trường',['magnet','current','ampere','balance','faraday','lorentz']],['Vật lý hạt nhân',['decay']],['Thiên văn',['solar3d','earthmoon','eclipse','tide','seasons','daynight']],['Sóng cơ',['standing']]]},
+ hoa:{n:'Hóa học',h:'hoa-hoc',ic:'🧪',d:'Chuẩn độ, tốc độ phản ứng, thang pH và chất chỉ thị.',groups:[['Dung dịch & phản ứng',['titr','rate','phs']],['Cấu tạo nguyên tử',['bohr','ruth','ptable']],['Điện hóa',['galv','electro']],['Cấu trúc phân tử – Hiđrocacbon',['m-metan','m-etan','m-eten','m-etin','m-benzen']],['Cấu trúc phân tử – Dẫn xuất chứa oxi',['m-metanol','m-etanol','m-phenol','m-metanal','m-etanal','m-axetic','m-este']],['Cấu trúc phân tử – Cacbohiđrat',['m-glucozo','m-fructozo','m-saccarozo','m-mantozo','m-tinhbot','m-xenlulozo']],['Cấu trúc phân tử – Hợp chất chứa nitơ',['m-metylamin','m-anilin','m-aminoaxit','m-peptit','m-protein']],['Cấu trúc tinh thể',['m-nacl','m-kimcuong','m-graphit']]]},
+ sinh:{n:'Sinh học',h:'sinh-hoc',ic:'🌿',d:'Quang hợp, thẩm thấu, di truyền Mendel và quần thể.',groups:[['Tế bào & thực vật',['photo','osmo']],['Di truyền & quần thể',['mendel','lv','m-adn']],['Tiêu hóa & quang hợp tinh bột',['photostarch','digest']]]}};
 Object.values(SUBJ).forEach(s=>{s.ids=s.groups.flatMap(g=>g[1])});
 const subOf=k=>Object.keys(SUBJ).find(s=>SUBJ[s].ids.includes(k));
 const ART={
@@ -647,7 +1175,7 @@ const ART={
 let inLab=false;const TC={};
 const dsc=k=>{const t=EX[k].desc.replace(/<[^>]+>/g,'');return t.length>88?t.slice(0,85)+'…':t};
 function thumb(k){const kk=k+col('--bg');if(TC[kk])return TC[kk];const e=EX[k],c=document.createElement('canvas');c.width=640;c.height=336;c.className='th';const o=[cx,W,H,mp];cx=c.getContext('2d');W=640;H=336;mp=null;
- try{const p={};e.params.forEach(a=>{p[a[0]]=a[5]});const s=e.reset(p),n={ampere:400,balance:480,heat:1200,rc:360,faraday:100,pend:150,proj:150,lorentz:250,titr:5800,lv:600,photo:600,osmo:1500,rate:480,mendel:1200}[k]||240;for(let i=0;i<n;i++)e.step(s,p,1/240);cx.fillStyle=col('--card');cx.fillRect(0,0,W,H);e.draw(s,p)}catch(err){}
+ try{const p={};e.params.forEach(a=>{p[a[0]]=a[5]});const s=e.reset(p),n={peptit:240,seasons:300,galv:480,electro:1200,photostarch:3000,digest:2400,earthmoon:600,tide:800,standing:300,ruth:1500,decay:1200,energy:300,fric:2400,mom:700,incl:200,bohr:700,ampere:400,balance:480,heat:1200,rc:360,faraday:100,pend:150,proj:150,lorentz:250,titr:5800,lv:600,photo:600,osmo:1500,rate:480,mendel:1200}[k]||240;for(let i=0;i<n;i++)e.step(s,p,1/240);cx.fillStyle=col('--card');cx.fillRect(0,0,W,H);e.draw(s,p)}catch(err){}
  cx=o[0];W=o[1];H=o[2];mp=o[3];return TC[kk]=c}
 function renderHome(){$('#homeCards').innerHTML=Object.keys(SUBJ).map(id=>{const s=SUBJ[id];return`<a class='sc' href='#${s.h}'>${ART[id]}<div class='tx'><h3>${s.ic} ${s.n}</h3><p>${s.d}</p><p><b>${s.ids.length} thí nghiệm</b></p></div></a>`}).join('')}
 function renderSub(id){const s=SUBJ[id],b=$('#subBody');$('#subCrumb').innerHTML=`<a href='#home'>Trang chủ</a> › ${s.n}`;b.innerHTML=`<h1>${s.ic} Thí nghiệm ${s.n}</h1><p class='sub'>${s.d} Chọn một thí nghiệm để vào trang mô phỏng.</p>`;
