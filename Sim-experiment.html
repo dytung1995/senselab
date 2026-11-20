@@ -85,6 +85,7 @@ h2{font-size:1rem;margin:0 0 8px}
 <div class="lab"><div class="card simcard">
   <canvas id="c"></canvas>
   <canvas id="g" style="margin-top:8px"></canvas>
+  <div class="btns" id="tb3" hidden style="margin:8px 0 0"><button id="zi">＋ Phóng to</button><button id="zo">－ Thu nhỏ</button><button id="zr">⟲ Đặt lại góc nhìn</button><span class="sub" style="margin:0;align-self:center">Kéo chuột: xoay 360° · Cuộn: thu/phóng · Shift+kéo: dịch chuyển</span></div>
   <p class="desc" id="desc"></p>
 </div>
 <aside class="side">
@@ -743,7 +744,6 @@ ptable:{name:'🗂️ Bảng tuần hoàn các nguyên tố',...ST,
 // ===== 3D engine & molecule builder =====
 const V3={yaw:.7,pitch:-.35};
 const mixc=(h,t,w)=>{const n=parseInt(h.slice(1),16),m=w?255:0;return 'rgb('+[(n>>16)&255,(n>>8)&255,n&255].map(v=>Math.round(v+(m-v)*t)).join(',')+')'};
-function P3(x,y,z,o){const c1=Math.cos(o.yaw),s1=Math.sin(o.yaw),c2=Math.cos(o.pitch),s2=Math.sin(o.pitch),x1=x*c1+z*s1,z1=-x*s1+z*c1,y1=y*c2-z1*s2,z2=y*s2+z1*c2,f=1/(1-z2*o.k);return[o.cx+x1*o.sc*f,o.cy-y1*o.sc*f,z2,f]}
 function sph(x,y,r,k){const g=cx.createRadialGradient(x-r*.35,y-r*.35,r*.1,x,y,r);g.addColorStop(0,mixc(k,.6,true));g.addColorStop(.55,k);g.addColorStop(1,mixc(k,.4,false));cx.fillStyle=g;cx.beginPath();cx.arc(x,y,r,0,7);cx.fill()}
 const EC={H:'#e5e7eb',C:'#4b5563',N:'#2563eb',O:'#dc2626',S:'#eab308',R:'#22c55e'},EV={H:1,C:1.45,N:1.3,O:1.3,S:1.5,R:1.8},EB={H:.27,C:.38,N:.38,O:.36,S:.5,R:.65};
 const va=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],vs=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],vm=(a,k)=>[a[0]*k,a[1]*k,a[2]*k],vd=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],vc=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],vl=a=>Math.hypot(a[0],a[1],a[2]),vn=a=>{const l=vl(a)||1;return[a[0]/l,a[1]/l,a[2]/l]};
@@ -862,7 +862,7 @@ const MD={};MOL.forEach(m=>{MD[m.id]=m});
 function getMol(id,v){v=v||0;const k=id+v;if(!MC[k]){const m=MD[id];MC[k]=MOLB[id]?MOLB[id](v):buildS(m.sm[v])}return MC[k]}
 const MM={H:1.008,C:12.011,N:14.007,O:15.999,S:32.06},SUBN='₀₁₂₃₄₅₆₇₈₉';
 function formulaOf(m){const c={};m.a.forEach(a=>{c[a.e]=(c[a.e]||0)+1});return Object.keys(c).sort((x,y)=>x=='C'?-1:y=='C'?1:x=='H'?-1:y=='H'?1:x<y?-1:1).map(k=>k+(c[k]>1?String(c[k]).replace(/\d/g,d=>SUBN[d]):'')).join('')}
-function mdraw(m,s,p){const o={cx:W/2,cy:H/2-8,yaw:V3.yaw+(p.rot?s.t*.5:0),pitch:V3.pitch,k:.02,sc:Math.min(W,H)*.42/Math.max(m.R+1.1,3)},st=p.style,pt=m.a.map(a=>P3(a.p[0]-m.c[0],a.p[1]-m.c[1],a.p[2]-m.c[2],o)),it=[];
+function mdraw(m,s,p){const o={cx:W/2,cy:H/2-8,spin:p.rot?s.t*.5:0,k:.02,sc:Math.min(W,H)*.42/Math.max(m.R+1.1,3)},st=p.style,pt=m.a.map(a=>P3(a.p[0]-m.c[0],a.p[1]-m.c[1],a.p[2]-m.c[2],o)),it=[];
  const rA=(e,f)=>(st==1?EV[e]*.85:EB[e])*o.sc*f;
  m.a.forEach((a,i)=>it.push({z:pt[i][2],i}));if(st!=1)m.b.forEach((b,ib)=>it.push({z:(pt[b[0]][2]+pt[b[1]][2])/2,b,ib}));it.sort((a,b)=>a.z-b.z);
  const rcp=m.rc?P3(m.rc[0]-m.c[0],m.rc[1]-m.c[1],m.rc[2]-m.c[2],o):null;
@@ -876,7 +876,7 @@ function mdraw(m,s,p){const o={cx:W/2,cy:H/2-8,yaw:V3.yaw+(p.rot?s.t*.5:0),pitch
   else{const a=m.a[x.i],P=pt[x.i],r=st==2?Math.max(2.2,rA(a.e,P[3])*.3):rA(a.e,P[3]);sph(P[0],P[1],r,EC[a.e]);if(st!=2&&r>10&&a.e!='H'&&a.e!='R'){cx.fillStyle='#fff';cx.font='bold '+Math.round(r*.9)+'px system-ui';cx.textAlign='center';cx.fillText(a.e[0]=='b'?a.e[1]:a.e,P[0],P[1]+r*.32);cx.textAlign='left'}}});
  const lg=(m.lg||[['C','Cacbon'],['H','Hiđro'],['O','Oxi'],['N','Nitơ'],['Na','Natri'],['Cl','Clo']]).filter(([e])=>m.a.some(a=>a.e==e)),lgR=m.a.some(a=>a.e=='R')?[['R','Gốc R']]:[];let x=12;cx.font='12px system-ui';
  lg.concat(lgR).forEach(([e,n])=>{cx.fillStyle=EC[e];cx.beginPath();cx.arc(x+6,H-16,6,0,7);cx.fill();cx.fillStyle=col('--mute');cx.fillText(n,x+16,H-12);x+=26+cx.measureText(n).width});
- cx.fillStyle=col('--mute');cx.fillText('Kéo chuột để xoay',W-110,H-12)}
+ cx.fillStyle=col('--mute');HINT3()}
 function molEntry(m){const ps=[];if(m.vo)ps.push(['v',m.vl,0,m.vo.length-1,1,0]);ps.push(['style','Kiểu mô hình',0,2,1,0],['rot','Tự quay',0,1,1,1]);
  OPT['m-'+m.id]={style:{l:'Kiểu mô hình',o:['Quả cầu – que','Quả cầu đầy','Khung dây']},rot:{l:'Tự quay',o:['Tắt','Bật']}};if(m.vo)OPT['m-'+m.id].v={l:m.vl,o:m.vo};
  return{name:m.n,d3:true,nog:true,desc:m.desc,params:ps,reset(p){return{t:0}},step(s,p,dt){s.t+=dt},val:()=>0,
@@ -1106,6 +1106,199 @@ daynight:{name:'🌗 Ngày và đêm',nog:true,
   cx.fillStyle='#dc2626';cx.beginPath();cx.arc(X(c.T),Y(c.alt*180/Math.PI),5,0,7);cx.fill();cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.fillText('Độ cao Mặt Trời (−90° … +90°) theo giờ trong ngày',cx0,cy0-8);cx.fillText('0 h',cx0,cy0+ch+14);cx.fillText('12 h',cx0+cw/2-10,cy0+ch+14);cx.fillText('24 h',cx0+cw-18,cy0+ch+14)}}
 });
 
+// ===== 3D camera (trackball, zoom, pan) & scene helpers =====
+const TB={R:[[1,0,0],[0,1,0],[0,0,1]],zoom:1,px:0,py:0},PTR={down:false},WV={};
+const rotX=a=>[[1,0,0],[0,Math.cos(a),-Math.sin(a)],[0,Math.sin(a),Math.cos(a)]],rotY=a=>[[Math.cos(a),0,Math.sin(a)],[0,1,0],[-Math.sin(a),0,Math.cos(a)]];
+function tbSet(c){c=c||[.6,.35];TB.R=mxm(rotX(c[1]),rotY(c[0]));TB.zoom=c[2]||1;TB.px=0;TB.py=0}
+function tbRot(dx,dy){const R=mxm(rotX(dy*.008),mxm(rotY(dx*.008),TB.R)),a=vn(R[0]),b=vn(vs(R[1],vm(a,vd(R[1],a))));TB.R=[a,b,vc(a,b)]}
+function P3(x,y,z,o){const R=TB.R,a=R[0][0]*x+R[0][1]*y+R[0][2]*z,b=R[1][0]*x+R[1][1]*y+R[1][2]*z,c=R[2][0]*x+R[2][1]*y+R[2][2]*z;let x1=a,z1=c;if(o.spin){const s=Math.sin(o.spin),k=Math.cos(o.spin);x1=a*k+c*s;z1=-a*s+c*k}const f=1/Math.max(.2,1-z1*o.k),sc=o.sc*TB.zoom;return[o.cx+TB.px+x1*sc*f,o.cy+TB.py-b*sc*f,z1,f]}
+const Q=[],qa=(o,p,fn)=>{const q=P3(p[0],p[1],p[2],o);Q.push({z:q[2],f:()=>fn(q)})},qflush=()=>{Q.sort((a,b)=>a.z-b.z).forEach(x=>x.f());Q.length=0};
+const L3=(o,a,b,k,w)=>{const p=P3(a[0],a[1],a[2],o),q=P3(b[0],b[1],b[2],o);ln(p[0],p[1],q[0],q[1],k,w)};
+const A3=(o,a,b,k,w)=>{const p=P3(a[0],a[1],a[2],o),q=P3(b[0],b[1],b[2],o);ln(p[0],p[1],q[0],q[1],k,w||3);ah(q[0],q[1],Math.atan2(q[1]-p[1],q[0]-p[0]),10,k)};
+const S3=(o,p,r,k)=>{const q=P3(p[0],p[1],p[2],o);sph(q[0],q[1],Math.max(2,r*o.sc*TB.zoom*q[3]),k)};
+const T3=(o,p,t,k)=>{const q=P3(p[0],p[1],p[2],o);cx.fillStyle=k||col('--fg');cx.font='12px system-ui';cx.fillText(t,q[0]+6,q[1]-6)};
+const G3=(o,y,h,st,k,cxs)=>{const c0=cxs||0;for(let v=-h;v<=h+1e-6;v+=st){L3(o,[c0+v,y,-h],[c0+v,y,h],k,1);L3(o,[c0-h,y,v],[c0+h,y,v],k,1)}};
+function poly3(o,pts,fill,k,al){const q=pts.map(p=>P3(p[0],p[1],p[2],o));cx.beginPath();q.forEach((u,i)=>i?cx.lineTo(u[0],u[1]):cx.moveTo(u[0],u[1]));cx.closePath();if(fill){cx.globalAlpha=al==null?.85:al;cx.fillStyle=fill;cx.fill();cx.globalAlpha=1}if(k){cx.strokeStyle=k;cx.lineWidth=1;cx.stroke()}return q.reduce((t,u)=>t+u[2],0)/q.length}
+function BX(o,c,a1,a2,a3,fill,k,al){const A=[a1,a2,a3],pt=s=>{let p=[c[0],c[1],c[2]];for(let i=0;i<3;i++){const g=s[i]?1:-1;p=[p[0]+g*A[i][0],p[1]+g*A[i][1],p[2]+g*A[i][2]]}return P3(p[0],p[1],p[2],o)},F=[];
+ for(let ax=0;ax<3;ax++)for(let g=0;g<2;g++){const o1=(ax+1)%3,o2=(ax+2)%3,P=[[0,0],[1,0],[1,1],[0,1]].map(([u,v])=>{const s=[0,0,0];s[ax]=g;s[o1]=u;s[o2]=v;return pt(s)});F.push({P,z:P.reduce((t,q)=>t+q[2],0)/4})}
+ F.sort((a,b)=>a.z-b.z).forEach(({P})=>{cx.beginPath();P.forEach((q,i)=>i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1]));cx.closePath();if(fill){cx.globalAlpha=al==null?.9:al;cx.fillStyle=fill;cx.fill();cx.globalAlpha=1}cx.strokeStyle=k||col('--fg');cx.lineWidth=1;cx.stroke()})}
+const helix3=(o,x0,x1,r,n,k,w,ax)=>{cx.strokeStyle=k;cx.lineWidth=w;cx.beginPath();for(let i=0;i<=n*14;i++){const u=i/(n*14),t=u*n*2*Math.PI,x=x0+(x1-x0)*u,p=P3(x,r*Math.cos(t),r*Math.sin(t),o);i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1])}cx.stroke()};
+const HINT3=()=>{cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.textAlign='right';cx.fillText('Kéo: xoay 360° · Cuộn: thu/phóng · Shift+kéo: dịch · Nhấp đúp: đặt lại',W-8,H-10);cx.textAlign='left'};
+// ===== 3D versions of earlier experiments =====
+Object.assign(EX.pend,{d3:true,cam:[.5,.3],draw(s,p){const o={cx:W/2,cy:H*.16,sc:(H-70)/3.8,k:.02},L=p.L,th=s.th,bob=[L*Math.sin(th),-L*Math.cos(th),0],fy=-3.1,FG=col('--fg'),t0=rad(p.th0);
+  G3(o,fy,1.8,.6,col('--line'));L3(o,[-1.3,0,0],[1.3,0,0],FG,5);[[-1.3,-.7],[-1.3,.7],[1.3,-.7],[1.3,.7]].forEach(([x,z])=>L3(o,[x,0,0],[x,fy,z],col('--mute'),3));
+  cx.setLineDash([4,4]);cx.strokeStyle=col('--mute');cx.lineWidth=1;cx.beginPath();for(let i=0;i<=40;i++){const a=-t0+2*t0*i/40,q=P3(L*Math.sin(a),-L*Math.cos(a),0,o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();cx.setLineDash([]);
+  const sh=P3(bob[0],fy,0,o);cx.fillStyle='rgba(0,0,0,.25)';cx.beginPath();cx.ellipse(sh[0],sh[1],12*sh[3],5*sh[3],0,0,7);cx.fill();
+  L3(o,[0,0,0],bob,FG,2);S3(o,[0,0,0],.05,'#64748b');S3(o,bob,.12,col('--acc2'));cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('θ = '+f(th*180/Math.PI,1)+'°',10,22);HINT3()}});
+Object.assign(EX.proj,{d3:true,cam:[.5,.28],draw(s,p){const vy=p.v0*Math.sin(rad(p.ang)),vx=p.v0*Math.cos(rad(p.ang)),R=Math.max(1,vx*(vy+Math.sqrt(vy*vy+2*p.g*p.h0))/p.g),Hm=Math.max(1,p.h0+vy*vy/(2*p.g)),sc=Math.min(W*.85/Math.max(R+6,10),H*.5/Math.max(Hm,4)),o={cx:W/2,cy:H*.58,sc,k:.003},w=(x,y,z)=>[x-R/2,y-Hm/2,z||0],st=Math.max(1,Math.round(R/8)),FG=col('--fg');
+  for(let x=-2;x<=R+2;x+=st)L3(o,w(x,0,-3),w(x,0,3),col('--line'),1);for(let z=-3;z<=3;z+=st)L3(o,w(-2,0,z),w(R+2,0,z),col('--line'),1);
+  L3(o,w(0,0,0),w(0,p.h0,0),col('--mute'),5);cx.setLineDash([5,4]);cx.strokeStyle=col('--mute');cx.lineWidth=1.5;cx.beginPath();for(let i=0;i<=60;i++){const t=i/60*(vy+Math.sqrt(vy*vy+2*p.g*p.h0))/p.g,q=P3(...w(vx*t,Math.max(0,p.h0+vy*t-.5*p.g*t*t),0),o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();cx.setLineDash([]);
+  cx.strokeStyle=col('--acc');cx.lineWidth=2.5;cx.beginPath();s.trail.forEach(([x,y],i)=>{const q=P3(...w(x,y,0),o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])});cx.stroke();
+  const bp=w(s.x,s.y,0),sh=P3(bp[0],-Hm/2,0,o);cx.fillStyle='rgba(0,0,0,.25)';cx.beginPath();cx.ellipse(sh[0],sh[1],9*sh[3],4*sh[3],0,0,7);cx.fill();S3(o,bp,Math.max(.25,R*.018),col('--acc2'));
+  if(!s.done)A3(o,bp,[bp[0]+s.vx*.25,bp[1]+s.vy*.25,0],'#059669',2.5);T3(o,w(R,0,0),'R = '+f(R,1)+' m',FG);HINT3()}});
+Object.assign(EX.spr,{d3:true,cam:[.55,.3],draw(s,p){const o={cx:W/2,cy:H*.55,sc:Math.min(W*.8/5,H*.4/1.4),k:.01},sh=.4,w=(x,y,z)=>[x+sh,y,z||0],xw=-2.2,xl=-.3+s.x;
+  BX(o,w(-2.3,0,0),[.1,0,0],[0,.8,0],[0,0,.9],'#94a3b8');BX(o,w(0,-.4,0),[3,0,0],[0,.1,0],[0,0,.9],'#cbd5e1',col('--mute'),.6);
+  L3(o,w(xw,0,0),w(xw+.25,0,0),col('--fg'),3);helix3(o,xw+.25+sh,xl-.25+sh,.17,13,col('--acc'),2.5);L3(o,w(xl-.25,0,0),w(xl,0,0),col('--fg'),3);
+  BX(o,w(s.x,0,0),[.3,0,0],[0,.3,0],[0,0,.35],col('--acc2'));cx.setLineDash([4,4]);L3(o,w(0,-.3,-.9),w(0,.8,-.9),col('--mute'),1);cx.setLineDash([]);T3(o,w(0,.85,-.9),'Vị trí cân bằng',col('--mute'));
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('x = '+f(s.x,2)+' m',10,22);HINT3()}});
+Object.assign(EX.incl,{d3:true,cam:[.55,.3],draw(s,p){const t=rad(p.th),c=Math.cos(t),sn=Math.sin(t),Lm=5,sc=Math.min(W*.55/Math.max(Lm*c,1.5),H*.5/Math.max(Lm*sn,1.5),75),o={cx:W/2,cy:H*.58,sc,k:.004},w=(x,y,z)=>[x+Lm*c/2,y-Lm*sn/2,z||0],hz=.8,FG=col('--fg');
+  G3(o,-Lm*sn/2,Math.max(Lm*c/2+1.2,2.4),Math.max(.8,Lm*c/5),col('--line'),0);
+  const A=[-Lm*c,Lm*sn],Bp=[0,0],C=[-Lm*c,0],F=[[[A[0],A[1],hz],[A[0],A[1],-hz],[Bp[0],0,-hz],[Bp[0],0,hz]],[[C[0],0,hz],[C[0],0,-hz],[0,0,-hz],[0,0,hz]],[[A[0],A[1],hz],[A[0],A[1],-hz],[C[0],0,-hz],[C[0],0,hz]],[[A[0],A[1],hz],[0,0,hz],[C[0],0,hz]],[[A[0],A[1],-hz],[0,0,-hz],[C[0],0,-hz]]].map(f=>({f:f.map(q=>w(q[0],q[1],q[2])),z:0}));
+  F.forEach(x=>{x.z=x.f.reduce((a,q)=>a+P3(q[0],q[1],q[2],o)[2],0)/x.f.length});F.sort((a,b)=>a.z-b.z).forEach(x=>poly3(o,x.f,'#cbd5e1',FG,.9));
+  const d=[c,-sn,0],n=[sn,c,0],ctr=[A[0]+d[0]*s.s+n[0]*.27,A[1]+d[1]*s.s+n[1]*.27,0];BX(o,w(...ctr),[d[0]*.4,d[1]*.4,0],[n[0]*.27,n[1]*.27,0],[0,0,.45],col('--acc'));
+  const g=p.m*9.81,Px=g*sn,Pn=g*c,Ff=Math.min(Px,p.mu*Pn),k=.05,cc=w(...ctr),ar=(v,L,col2,tx,dash)=>{if(dash)cx.setLineDash([4,3]);A3(o,cc,[cc[0]+v[0]*L*k,cc[1]+v[1]*L*k,0],col2,2.5);cx.setLineDash([]);cx.fillStyle=col2;cx.font='bold 12px system-ui';mt(cx,tx,P3(cc[0]+v[0]*L*k,cc[1]+v[1]*L*k,0,o)[0]+6,P3(cc[0]+v[0]*L*k,cc[1]+v[1]*L*k,0,o)[1])};
+  ar([0,-1],g,'#dc2626','P');ar(n,Pn,'#059669','N');ar(d,Px,'#d97706','P_x',1);ar([-n[0],-n[1]],Pn,'#d97706','P_y',1);if(Ff>.05)ar([-d[0],-d[1]],Ff,'#2563eb','F_ms');
+  cx.fillStyle=FG;cx.font='13px system-ui';cx.fillText('θ = '+p.th+'°',10,22);HINT3()}});
+Object.assign(EX.fric,{d3:true,cam:[.5,.3],draw(s,p){const o={cx:W/2,cy:H*.55,sc:Math.min(W,H)*.2,k:.01},FG=col('--fg');
+  for(let i=-8;i<=8;i++){const x=i*.5-((s.x*.5)%.5);L3(o,[x,-.35,-1.6],[x,-.35,1.6],col('--line'),1)}[-1.6,-.8,0,.8,1.6].forEach(z=>L3(o,[-4,-.35,z],[4,-.35,z],col('--line'),1));
+  BX(o,[0,0,0],[.6,0,0],[0,.35,0],[0,0,.5],col('--acc'));cx.fillStyle='#fff';const q=P3(0,.38,.5,o);cx.font='bold 13px system-ui';cx.textAlign='center';cx.fillText(p.m+' kg',q[0],q[1]+12);cx.textAlign='left';
+  const L1=Math.min(2.4,s.Fa*.05),L2=Math.min(2.4,s.fr*.05);if(L1>.02){A3(o,[.6,0,0],[.6+L1,0,0],'#2563eb',4);T3(o,[.6+L1,.2,0],'F = '+f(s.Fa,1)+' N','#2563eb')}if(L2>.02){A3(o,[-.6,0,.4],[-.6-L2,0,.4],'#dc2626',4);T3(o,[-.6-L2,.25,.4],'F_ms = '+f(s.fr,1)+' N','#dc2626')}
+  cx.fillStyle=col('--mute');cx.font='13px system-ui';cx.fillText(s.v>0?'Vật đang trượt – ma sát trượt':'Vật đứng yên – ma sát nghỉ',10,22);HINT3()}});
+Object.assign(EX.mom,{d3:true,cam:[.4,.3],draw(s,p){const o={cx:W/2,cy:H*.58,sc:Math.min(W*.85/18,70),k:.004},FG=col('--fg');BX(o,[0,-.4,0],[9,0,0],[0,.06,0],[0,0,.55],'#94a3b8',col('--mute'),.8);
+  [[s.x1,p.m1,s.v1,col('--acc')],[s.x2,p.m2,s.v2,col('--acc2')]].forEach(([x,m,v,k],i)=>{BX(o,[x,0,0],[.5,0,0],[0,.32,0],[0,0,.42],k);[[-.3,-.45],[.3,-.45],[-.3,.45],[.3,.45]].forEach(([dx,dz])=>S3(o,[x+dx,-.34,dz],.1,'#1f2937'));T3(o,[x-.3,.5,0],m+' kg',FG);if(Math.abs(v)>.05){A3(o,[x,.85,0],[x+v*.3,.85,0],'#059669',3);T3(o,[x+v*.3,.95,0],'v'+(i+1)+' = '+f(v,2),'#059669')}});
+  cx.fillStyle=col('--mute');cx.font='13px system-ui';cx.fillText(s.hit?'Đã va chạm (e = '+f(p.e,2)+')':p.v1>p.v2?'Chuẩn bị va chạm':'Hai vật không va chạm',10,22);cx.fillText('p = '+f(s.pt,2)+' kg·m/s',10,40);HINT3()}});
+Object.assign(EX.energy,{d3:true,cam:[.5,.28],draw(s,p){const o={cx:W*.34,cy:H*.55,sc:Math.min(W*.5/11.5,H*.55/7.4),k:.004},w=(x,y,z)=>[x,y-3.4,z||0],FG=col('--fg');
+  [-1.6,-.8,0,.8,1.6].forEach(z=>{cx.strokeStyle=col('--mute');cx.lineWidth=1.3;cx.beginPath();for(let i=0;i<=52;i++){const x=-5.2+i*.2,q=P3(...w(x,.25*x*x,z),o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke()});
+  for(let x=-5;x<=5;x++)L3(o,w(x,.25*x*x,-1.6),w(x,.25*x*x,1.6),col('--line'),1);
+  const sl=.5*s.x,q=Math.sqrt(1+sl*sl),bp=w(s.x-sl/q*.3,.25*s.x*s.x+.3/q,0);S3(o,bp,.3,col('--acc2'));
+  const E0=s.E0||1,x0=W*.64,bw=W*.34/4,hb=H-130,names=['Thế năng','Động năng','Nhiệt Q','Tổng'],vals=[s.pe,s.ke,s.Q,s.pe+s.ke+s.Q],cols=[col('--acc'),col('--acc2'),col('--grn'),'#d97706'];
+  ln(x0-6,H-44,W-12,H-44,col('--mute'),2);cx.setLineDash([4,4]);ln(x0-6,H-44-hb,W-12,H-44-hb,col('--mute'),1.2);cx.setLineDash([]);
+  vals.forEach((v,i)=>{const h=Math.max(0,Math.min(1.1,v/E0))*hb;cx.fillStyle=cols[i];cx.fillRect(x0+i*bw+4,H-44-h,bw-8,h);cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.textAlign='center';cx.fillText(names[i],x0+i*bw+bw/2,H-28);cx.fillText(f(v,1),x0+i*bw+bw/2,H-44-h-4)});cx.textAlign='left';cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('E₀ = '+f(E0,1)+' J',x0-4,H-44-hb-6);HINT3()}});
+// ---- magnetic field in 3D ----
+const dip=(r,N,S)=>{let b=[0,0,0];[[N,1],[S,-1]].forEach(([q,g])=>{const d=vs(r,q),r2=vd(d,d)+.04,k=g/(r2*Math.sqrt(r2));b=va(b,vm(d,k))});return b};
+Object.assign(EX.magnet,{d3:true,cam:[.6,.35],
+ info(s,p){const a=rad(p.ang),N=[Math.cos(a),Math.sin(a),0],S=vm(N,-1),pr=[2.2,1.2,.8],b=dip(pr,N,S),m=vl(b);return[['Góc nam châm',p.ang+'°'],['B tại điểm khảo sát (2,2; 1,2; 0,8)',f(p.M*m/9,1)+' mT (ước lượng)'],['Hướng B tại đó','('+f(b[0]/m,2)+'; '+f(b[1]/m,2)+'; '+f(b[2]/m,2)+')'],['Chiều đường sức','Ngoài nam châm: N → S'],['Trong nam châm','S → N (đường sức khép kín)'],['Đường sức','Không bao giờ cắt nhau']]},
+ draw(s,p){const a=rad(p.ang),ca=Math.cos(a),sa=Math.sin(a),N=[ca,sa,0],S=[-ca,-sa,0],o={cx:W/2,cy:H*.5,sc:Math.min(W,H)*.13,k:.012},AC=col('--acc'),ar=[];
+  const dirs=[];for(let i=0;i<26;i++){const y=1-2*(i+.5)/26,r=Math.sqrt(1-y*y),t=i*2.399;const d=[r*Math.cos(t),y,r*Math.sin(t)];if(vd(d,N)>-.15)dirs.push(d)}
+  cx.lineWidth=1.4;dirs.forEach(d=>{let r=va(N,vm(d,.3));cx.strokeStyle=AC;cx.beginPath();const q0=P3(r[0],r[1],r[2],o);cx.moveTo(q0[0],q0[1]);for(let i=0;i<260;i++){const b=dip(r,N,S),m=vl(b)||1,st=.07;r=va(r,vm(b,st/m));const q=P3(r[0],r[1],r[2],o);cx.lineTo(q[0],q[1]);if(i%34==20)ar.push([r,vm(b,1/m)]);if(vl(vs(r,S))<.28||vl(r)>6)break}cx.stroke()});
+  ar.forEach(([r,d])=>{const q=P3(r[0],r[1],r[2],o),q2=P3(r[0]+d[0]*.1,r[1]+d[1]*.1,r[2]+d[2]*.1,o);ah(q[0],q[1],Math.atan2(q2[1]-q[1],q2[0]-q[0]),7,AC)});
+  if(p.comp)for(let gx=-3;gx<=3;gx+=1.5)for(let gy=-3;gy<=3;gy+=1.5){const r=[gx,gy,-.01];if(vl(vs(r,N))<.9||vl(vs(r,S))<.9||Math.abs(gx*sa-gy*ca)<.6&&Math.abs(gx*ca+gy*sa)<1.2)continue;const b=dip(r,N,S),m=vl(b),u=vm(b,.28/m);A3(o,vs(r,u),va(r,u),'#dc2626',2.5)}
+  const hx=[ca*.5,sa*.5,0],mk=(c,col2)=>BX(o,vm(c,.5),[ca*.5,sa*.5,0],[-sa*.3,ca*.3,0],[0,0,.3],col2);mk([ca,sa,0],'#dc2626');mk([-ca,-sa,0],'#2563eb');T3(o,[ca*1.1,sa*1.1,.4],'N','#dc2626');T3(o,[-ca*1.1,-sa*1.1,.4],'S','#2563eb');
+  const pr=[2.2,1.2,.8],b=dip(pr,N,S),m=vl(b);S3(o,pr,.1,'#059669');A3(o,pr,va(pr,vm(b,.6/m)),'#059669',3);T3(o,pr,'điểm khảo sát','#059669');HINT3()}});
+Object.assign(EX.current,{d3:true,cam:[.6,.35],draw(s,p){const o={cx:W/2,cy:H*.5,sc:Math.min(W,H)*.12,k:.012},sg=Math.sign(p.I),A=col('--acc'),FG=col('--fg');
+  if(!p.mode){L3(o,[0,-3,0],[0,3,0],FG,6);if(sg)A3(o,[0,2.2,0],[0,3.2,0],'#d97706',4);T3(o,[0,3.3,0],'I','#d97706');
+   [-2,-1,0,1,2].forEach(y=>[.7,1.4,2.1].forEach(r=>{cx.strokeStyle=A;cx.globalAlpha=sg?1:.3;cx.lineWidth=1.5;cx.beginPath();for(let i=0;i<=48;i++){const t=i*Math.PI/24,q=P3(r*Math.sin(t),y,r*Math.cos(t),o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();cx.globalAlpha=1;if(sg)[.5,2.6,4.7].forEach(t=>{const t1=t,t2=t+.12*sg,q=P3(r*Math.sin(t1),y,r*Math.cos(t1),o),u=P3(r*Math.sin(t2),y,r*Math.cos(t2),o);ah(q[0],q[1],Math.atan2(u[1]-q[1],u[0]-q[0]),7,A)})}));
+   const pa=.8,pq=[p.r*.2*Math.sin(pa),0,p.r*.2*Math.cos(pa)];S3(o,pq,.1,'#dc2626');if(sg){const tg=[Math.cos(pa)*sg,0,-Math.sin(pa)*sg];A3(o,pq,va(pq,vm(tg,.8)),'#dc2626',3)}T3(o,pq,'r = '+f(p.r,1)+' cm','#dc2626')}
+  else{const n=Math.min(14,2+Math.round(p.n*.7)),X0=-2.2,X1=2.2;helix3(o,X0,X1,.8,n,FG,2.2);
+   if(sg){const sd=sg;[[0,0],[.3,0],[-.3,0],[0,.3],[0,-.3]].forEach(([y,z])=>{A3(o,[-3.4*sd,y,z],[3.4*sd,y,z],A,2)});
+    for(let ph=0;ph<6;ph++)[1.3,2.1].forEach((R,j)=>{cx.strokeStyle=A;cx.globalAlpha=.75-.2*j;cx.lineWidth=1.4;cx.beginPath();for(let i=0;i<=40;i++){const u=i*Math.PI/40,x=-sd*3.4*Math.cos(u),rr=R*Math.sin(u),q=P3(x,rr*Math.cos(ph*Math.PI/3),rr*Math.sin(ph*Math.PI/3),o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();cx.globalAlpha=1;const x=-sd*0,rr=R,q=P3(0,rr*Math.cos(ph*Math.PI/3),rr*Math.sin(ph*Math.PI/3),o),u=P3(-sd*.3,rr*Math.cos(ph*Math.PI/3),rr*Math.sin(ph*Math.PI/3),o);ah(q[0],q[1],Math.atan2(u[1]-q[1],u[0]-q[0]),7,A)})}
+   T3(o,[X1,.9,0],'ống dây',FG)}
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText(p.mode?'Ống dây: B trong lòng ống đều, ngoài ống yếu':'Dây thẳng: đường sức là các vòng tròn đồng tâm (quy tắc nắm tay phải)',10,22);HINT3()}});
+// ---- Lorentz force in 3D ----
+Object.assign(EX.lorentz,{d3:true,cam:[.7,.3],
+ params:[['B','Cảm ứng từ B (T), dương = hướng lên, âm = hướng xuống',-2,2,.1,.5],['v','Vận tốc v (×10⁶ m/s)',1,10,.5,3],['q','Điện tích q (×1,6·10⁻¹⁹ C)',-3,3,1,1],['m','Khối lượng m (×10⁻²⁷ kg)',1,10,.1,1.7],['ang','Góc giữa v và B (°)',10,90,5,60]],
+ rc(p){return(p.q&&p.B)?p.m*1e-27*p.v*1e6*Math.sin(rad(p.ang))/(Math.abs(p.q)*1.6e-19*Math.abs(p.B))*100:Infinity},
+ reset(p){const u=23.3,a=rad(p.ang),sb=p.B<0?-1:1,v=p.B?[u*Math.sin(a),u*Math.cos(a)*sb,0]:[u*Math.sin(a),u*Math.cos(a),0];return{t:0,r:[0,0,0],v,tr:[[0,0,0]],lt:0}},
+ step(s,p,dt){const r=EX.lorentz.rc(p),u=23.3*Math.sin(rad(p.ang));s.t+=dt;if(isFinite(r)){const ph=-Math.sign(p.q*p.B)*u/r*dt,c=Math.cos(ph),sn=Math.sin(ph),vx=s.v[0],vz=s.v[2];s.v[0]=vx*c+vz*sn;s.v[2]=-vx*sn+vz*c}
+  s.r=va(s.r,vm(s.v,dt));s.lt+=dt;if(s.lt>.02){s.lt=0;s.tr.push(s.r.slice());if(s.tr.length>900)s.tr.shift()}if(Math.abs(s.r[1])>40||Math.hypot(s.r[0],s.r[2])>60){s.r=[0,0,0];s.tr=[[0,0,0]];const a=rad(p.ang),sb=p.B<0?-1:1;s.v=p.B?[23.3*Math.sin(a),23.3*Math.cos(a)*sb,0]:[23.3*Math.sin(a),23.3*Math.cos(a),0]}},
+ info(s,p){const r=EX.lorentz.rc(p),ke=.5*p.m*1e-27*Math.pow(p.v*1e6,2)/1.6e-16,F=Math.abs(p.q)*1.6e-19*p.v*1e6*Math.sin(rad(p.ang))*Math.abs(p.B);
+  if(!isFinite(r))return[['Lực từ F','0 N'],['Quỹ đạo','Đường thẳng'],['Vận tốc v',p.v+' ×10⁶ m/s'],['Động năng',f(ke,1)+' keV'],['Lý do',p.q?'B = 0':'q = 0 (hạt trung hòa)']];
+  const T=2*Math.PI*p.m*1e-27/(Math.abs(p.q)*1.6e-19*Math.abs(p.B));return[['Bán kính xoắn r',f(r,2)+' cm'],['Bước xoắn h = 2πr·v∥/v⊥',f(2*Math.PI*r/Math.tan(rad(p.ang)),2)+' cm'],['Chu kỳ T',f(T*1e9,1)+' ns'],['Lực từ F = |q|vB·sinα',f(F*1e13,2)+' ×10⁻¹³ N'],['Động năng',f(ke,1)+' keV'],['Quỹ đạo','Đường xoắn ốc quanh đường sức từ']]},
+ draw(s,p){const r=EX.lorentz.rc(p),sc=Math.min(7,Math.min(W,H)*.34/Math.max(8,isFinite(r)?r*1.6:20)),o={cx:W/2,cy:H*.5,sc,k:.003},sb=p.B<0?-1:1,FG=col('--fg');
+  if(p.B)[[-12,-12],[12,-12],[-12,12],[12,12],[0,0]].forEach(([x,z])=>{A3(o,[x,-22*sb,z],[x,22*sb,z],col('--line'),1.5)});T3(o,[0,24*sb,0],'B',col('--mute'));
+  L3(o,[-40,-22,-40],[40,-22,-40],col('--line'),1);cx.strokeStyle=col('--acc2');cx.lineWidth=2.4;cx.beginPath();s.tr.forEach((q,i)=>{const u=P3(q[0],q[1],q[2],o);i?cx.lineTo(u[0],u[1]):cx.moveTo(u[0],u[1])});cx.stroke();
+  const vn2=vn(s.v),Bv=[0,p.B,0],F=vm(vn([-s.v[2]*p.B*p.q,0,s.v[0]*p.B*p.q]),1);S3(o,s.r,.9,Math.sign(p.q)>0?'#dc2626':Math.sign(p.q)<0?'#2563eb':'#9ca3af');
+  A3(o,s.r,va(s.r,vm(vn2,9)),'#059669',3);T3(o,va(s.r,vm(vn2,9)),'v','#059669');if(p.q&&p.B&&isFinite(r)){const fl=vn(F);A3(o,s.r,va(s.r,vm(fl,7)),'#dc2626',3);T3(o,va(s.r,vm(fl,7)),'F','#dc2626')}
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Mũi tên xám dọc: đường sức từ B · xanh: vận tốc v · đỏ: lực từ F',10,22);HINT3()}});
+// ---- force on a current-carrying wire in 3D ----
+Object.assign(EX.ampere,{d3:true,cam:[.6,.3],
+ params:[['B','Cảm ứng từ B (T), dương = sang phải, âm = sang trái',-1,1,.1,.5],['I','Dòng điện I (A), dấu dương/âm là hai chiều ngược nhau',-10,10,1,5],['L','Chiều dài đoạn dây L (m)',.05,.5,.05,.2],['al','Góc α giữa dây và đường sức từ (°)',10,170,5,90]],
+ reset(p){return{t:0,y:0,v:0}},
+ step(s,p,dt){const tg=Math.max(-1.2,Math.min(1.2,p.I*p.B*p.L*Math.sin(rad(p.al))*1.6));s.v+=(-40*(s.y-tg)-7*s.v)*dt;s.y+=s.v*dt;s.t+=dt},
+ info(s,p){const F=Math.abs(p.B*p.I)*p.L*Math.sin(rad(p.al)),sg=p.I*p.B*Math.sin(rad(p.al));return[['Từ trường B',p.B==0?'Không có':f(Math.abs(p.B),1)+' T, '+(p.B>0?'sang phải (+x)':'sang trái (−x)')],['Dòng điện I',p.I==0?'Không có':f(Math.abs(p.I),0)+' A, '+(p.I>0?'cùng chiều mũi tên vàng':'ngược chiều mũi tên')],['Góc α',p.al+'°'],['Độ lớn lực F = BIL·sinα',f(F,3)+' N'],['Hướng của lực F',F<1e-9?'Không có lực':sg>0?'Hướng lên (+y)':'Hướng xuống (−y)'],['Quy tắc','Bàn tay trái: B xuyên lòng bàn tay, ngón giữa theo I, ngón cái chỉ F (F ⊥ B, F ⊥ dây)']]},
+ draw(s,p){const o={cx:W/2,cy:H*.5,sc:Math.min(W,H)*.13,k:.01},sB=Math.sign(p.B),a=rad(p.al),w=[Math.cos(a),0,Math.sin(a)],c=[0,s.y,0],FG=col('--fg');
+  [[-2.6,sB>=0?'#dc2626':'#2563eb',sB>=0?'N':'S'],[2.6,sB>=0?'#2563eb':'#dc2626',sB>=0?'S':'N']].forEach(([x,k,t])=>{BX(o,[x,0,0],[.35,0,0],[0,1.3,0],[0,0,1.3],k);T3(o,[x,1.5,0],t,k)});
+  if(sB)[-.9,0,.9].forEach(y=>[-.9,0,.9].forEach(z=>A3(o,[-2*sB,y,z],[2*sB,y,z],col('--acc'),1.5)));
+  const e1=va(c,vm(w,-1.5)),e2=va(c,vm(w,1.5));L3(o,e1,e2,FG,6);S3(o,e1,.1,'#64748b');S3(o,e2,.1,'#64748b');
+  if(p.I){const sg=Math.sign(p.I);A3(o,va(c,vm(w,-.4*sg)),va(c,vm(w,.9*sg)),'#d97706',4);T3(o,va(c,vm(w,1*sg)),'I','#d97706')}
+  const Fy=p.I*p.B*Math.sin(a)*p.L;if(Math.abs(Fy)>1e-9){const d=Fy>0?1:-1,len=Math.min(2.2,.6+Math.abs(Fy)*1.4);A3(o,c,[0,s.y+d*len,0],'#dc2626',4);T3(o,[0,s.y+d*len,0],'F','#dc2626')}
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Xanh dương: đường sức từ B · Vàng: dòng điện I · Đỏ: lực từ F = I·L × B',10,22);HINT3()}});
+// ---- electromagnetic induction in 3D ----
+Object.assign(EX.faraday,{d3:true,cam:[.6,.3],draw(s,p){const o={cx:W/2,cy:H*.42,sc:Math.min(W*.9/24,H*.42/5),k:.01},em=EX.faraday.emax(p),FG=col('--fg'),k=Math.min(1,Math.abs(s.e)/em),ck=mixc('#d97706',k,false);
+  helix3(o,-1.5,1.5,2,8,k>.1?'#ef4444':'#d97706',2.2+2*k);ln(0,0,0,0,FG,1);
+  const m=(c,k2)=>BX(o,[s.z+c,0,0],[1.25,0,0],[0,.8,0],[0,0,.8],k2);m(-1.25,'#2563eb');m(1.25,'#dc2626');T3(o,[s.z-2.5,1.1,0],'S','#2563eb');T3(o,[s.z+2.4,1.1,0],'N','#dc2626');
+  L3(o,[-12,-2.6,0],[12,-2.6,0],col('--line'),1);
+  const gx=W/2,gy=H-46;cx.fillStyle=col('--card');cx.strokeStyle=FG;cx.lineWidth=2;cx.fillRect(gx-60,gy-40,120,48);cx.strokeRect(gx-60,gy-40,120,48);const an=Math.max(-1,Math.min(1,s.e/em));ln(gx,gy+2,gx+36*Math.sin(an),gy+2-36*Math.cos(an),col('--acc2'),3);cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('G',gx-4,gy-28);cx.fillText('Cuộn dây (N = '+p.N+' vòng) – cuộn đổi màu khi có dòng cảm ứng',10,22);HINT3()}});
+// ---- gas laws in 3D ----
+const mk3=(n,L)=>Array.from({length:n},()=>{const z=Math.random()*2-1,t=Math.random()*6.283,r=Math.sqrt(1-z*z);return{x:Math.random()*L,y:Math.random(),z:Math.random(),d:[r*Math.cos(t),r*Math.sin(t),z]}});
+function mv3(s,sp,L,dt){let imp=0;for(const q of s.ps){q.x+=q.d[0]*sp*dt;q.y+=q.d[1]*sp*dt;q.z+=q.d[2]*sp*dt;if(q.x<0||q.x>L){q.x=q.x<0?-q.x:2*L-q.x;imp+=2*sp*Math.abs(q.d[0]);q.d[0]=-q.d[0]}if(q.y<0||q.y>1){q.y=q.y<0?-q.y:2-q.y;imp+=2*sp*Math.abs(q.d[1]);q.d[1]=-q.d[1]}if(q.z<0||q.z>1){q.z=q.z<0?-q.z:2-q.z;imp+=2*sp*Math.abs(q.d[2]);q.d[2]=-q.d[2]}}return imp}
+function gbox3(o,s,L,T){const w=(x,y,z)=>[x-L/2,y-.5,z-.5],k=col('--mute'),h=hue(T);const E=[[[0,0,0],[L,0,0]],[[0,1,0],[L,1,0]],[[0,0,1],[L,0,1]],[[0,1,1],[L,1,1]],[[0,0,0],[0,1,0]],[[L,0,0],[L,1,0]],[[0,0,1],[0,1,1]],[[L,0,1],[L,1,1]],[[0,0,0],[0,0,1]],[[L,0,0],[L,0,1]],[[0,1,0],[0,1,1]],[[L,1,0],[L,1,1]]];
+ E.forEach(([a,b])=>L3(o,w(...a),w(...b),k,1.5));poly3(o,[w(L,0,0),w(L,1,0),w(L,1,1),w(L,0,1)],'#dc2626','#dc2626',.25);
+ for(const q of s.ps)qa(o,w(q.x,q.y,q.z),u=>sph(u[0],u[1],Math.max(2,.03*o.sc*TB.zoom*u[3]),hslHex(h)));qflush()}
+const hslHex=h=>{const a=.8*Math.min(.55,1-.55),f2=n=>{const k=(n+h/30)%12,c=.55-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,'0')};return'#'+f2(0)+f2(8)+f2(4)};
+Object.assign(EX.gas,{d3:true,cam:[.6,.35],
+ reset(p){const sp=.8*Math.sqrt(p.T/300);return{t:0,pm:p.N*sp*sp/(3*p.V),ps:mk3(p.N,p.V)}},
+ step(s,p,dt){const sp=.8*Math.sqrt(p.T/300),L=p.V,imp=mv3(s,sp,L,dt);s.t+=dt;s.pm+=(imp/dt/(4*L+2)-s.pm)*dt/2},
+ info(s,p){const sp=.8*Math.sqrt(p.T/300);return[['Nhiệt độ T',f(p.T,0)+' K'],['Thể tích hộp V',f(p.V)],['P đo được',f(s.pm,1)],['P lý thuyết (NkT/V)',f(p.N*sp*sp/(3*p.V),1)],['P·V (đo)',f(s.pm*p.V,1)],['Tốc độ hạt',f(sp)]]},
+ draw(s,p){const o={cx:W/2,cy:H/2,sc:Math.min(W,H)*.5,k:.15};gbox3(o,s,p.V,p.T);cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Khí lý tưởng 3 chiều: P·V = NkT; mặt đỏ là pít-tông',10,22);HINT3()}});
+Object.assign(EX.boyle,{d3:true,cam:[.6,.3],
+ reset(p){const V=p.auto?1:p.V,sp=.8*Math.sqrt(p.T/300);return{t:0,V,pm:p.N*sp*sp/(3*V),ps:mk3(p.N,V),pts:[],lp:0}},
+ step(s,p,dt){const sp=.8*Math.sqrt(p.T/300);s.t+=dt;s.V=p.auto?.65+.35*Math.cos(2*Math.PI*s.t/30):p.V;const imp=mv3(s,sp,s.V,dt);s.pm+=(imp/dt/(4*s.V+2)-s.pm)*dt;if(s.t-s.lp>=.4){s.pts.push([s.V,s.pm]);s.lp=s.t;if(s.pts.length>150)s.pts.shift()}},
+ info(s,p){const sp=.8*Math.sqrt(p.T/300),k=p.N*sp*sp/3;return[['Nhiệt độ T (không đổi)',f(p.T,0)+' K'],['Thể tích V',f(s.V)],['Áp suất P (đo)',f(s.pm,1)],['Áp suất P (lý thuyết)',f(k/s.V,1)],['P·V (đo)',f(s.pm*s.V,1)],['P·V = NkT (lý thuyết)',f(k,1)]]},
+ draw(s,p){const wl=W*.4,sp=.8*Math.sqrt(p.T/300),k=p.N*sp*sp/3,o={cx:wl/2+10,cy:H/2,sc:Math.min(wl*.8,H*.5),k:.15};gbox3(o,s,s.V,p.T);plot(wl+70,40,W-wl-90,H-100,.2,1,k/.3*1.1,'V','P',x=>k/x,s.pts,[s.V,s.pm],true);HINT3()}});
+Object.assign(EX.charles,{d3:true,cam:[.6,.3],
+ reset(p){const T=p.auto?350:p.T;return{t:0,T,L:T/700,pm:p.N*.4978,ps:mk3(p.N,T/700),pts:[],lp:0}},
+ step(s,p,dt){s.t+=dt;s.T=p.auto?350+250*Math.sin(2*Math.PI*s.t/40):p.T;s.L=s.T/700;const sp=.8*Math.sqrt(s.T/300),imp=mv3(s,sp,s.L,dt);s.pm+=(imp/dt/(4*s.L+2)-s.pm)*dt;if(s.t-s.lp>=.4){s.pts.push([s.T,s.L]);s.lp=s.t;if(s.pts.length>150)s.pts.shift()}},
+ info(s,p){return[['Nhiệt độ T',f(s.T,0)+' K'],['Nhiệt độ t',f(s.T-273.15,0)+' °C'],['Thể tích V',f(s.L,3)],['V/T (×1000)',f(s.L/s.T*1000,2)],['Áp suất P (đo)',f(s.pm,1)],['Áp suất ngoài P₀',f(p.N*.4978,1)]]},
+ draw(s,p){const wl=W*.4,o={cx:wl/2+10,cy:H/2,sc:Math.min(wl*.8,H*.5),k:.15};gbox3(o,s,s.L,s.T);plot(wl+70,40,W-wl-90,H-100,0,700,1,'T (K)','V',x=>x/700,s.pts,[s.T,s.L],true);HINT3()}});
+// ---- Sun - Earth - Moon in 3D ----
+Object.assign(EX.earthmoon,{d3:true,cam:[.6,.55],draw(s,p){const t=s.t,e=(2*Math.PI*t/29.53)%(2*Math.PI),te=2*Math.PI*t/365.26,o={cx:W*.34,cy:H*.5,sc:Math.min(W*.3,H*.42)/140,k:.0015},Rr=130,rm=24,FG=col('--fg');
+  const E=[Rr*Math.cos(te),0,-Rr*Math.sin(te)],ma=te+Math.PI+e,M=[E[0]+rm*Math.cos(ma),rm*.0889*Math.sin(ma),E[2]-rm*Math.sin(ma)];
+  cx.strokeStyle=col('--line');cx.lineWidth=1;cx.beginPath();for(let i=0;i<=90;i++){const a=i*Math.PI/45,q=P3(Rr*Math.cos(a),0,-Rr*Math.sin(a),o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();
+  cx.setLineDash([3,4]);cx.beginPath();for(let i=0;i<=48;i++){const a=i*Math.PI/24,q=P3(E[0]+rm*Math.cos(a),rm*.0889*Math.sin(a),E[2]-rm*Math.sin(a),o);i?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke();cx.setLineDash([]);
+  const sun=P3(0,0,0,o),eq=P3(...E,o),mq=P3(...M,o),item=[];
+  item.push({z:0,f:()=>{const r=16*o.sc*TB.zoom*sun[3],g=cx.createRadialGradient(sun[0],sun[1],r*.2,sun[0],sun[1],r*2.4);g.addColorStop(0,'#fff7ae');g.addColorStop(.4,'#fbbf24');g.addColorStop(1,'rgba(251,191,36,0)');cx.fillStyle=g;cx.beginPath();cx.arc(sun[0],sun[1],r*2.4,0,7);cx.fill();sph(sun[0],sun[1],r,'#f59e0b')}});
+  item.push({z:eq[2],f:()=>{const r=Math.max(3,8*o.sc*TB.zoom*eq[3]);litBody(eq[0],eq[1],r,Math.atan2(sun[1]-eq[1],sun[0]-eq[0]),'#3b82f6','#1e3a5f');cx.fillStyle=FG;cx.font='12px system-ui';cx.fillText('Trái Đất',eq[0]+r+4,eq[1]-4)}});
+  item.push({z:mq[2],f:()=>{const r=Math.max(2,4*o.sc*TB.zoom*mq[3]);litBody(mq[0],mq[1],r,Math.atan2(sun[1]-mq[1],sun[0]-mq[0]),'#e5e7eb','#475569');cx.fillStyle=col('--mute');cx.fillText('Mặt Trăng',mq[0]+r+3,mq[1]+12)}});
+  item.sort((a,b)=>a.z-b.z).forEach(x=>x.f());cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('Mặt Trời',sun[0]-20,sun[1]+36);cx.fillText('Quỹ đạo Mặt Trăng nghiêng 5° so với mặt phẳng hoàng đạo (không theo tỉ lệ)',10,H-26);
+  const px=W*.8,py=H*.3,pr=Math.min(52,W*.12);drawPhase(px,py,pr,e,'#f1f5f9','#334155');cx.strokeStyle=col('--mute');cx.lineWidth=1;cx.beginPath();cx.arc(px,py,pr,0,7);cx.stroke();
+  const i=Math.floor(e/(2*Math.PI)*8+.5)%8;cx.fillStyle=FG;cx.font='bold 13px system-ui';cx.textAlign='center';cx.fillText(MPN[i],px,py+pr+20);cx.font='12px system-ui';cx.fillStyle=col('--mute');cx.fillText('Nhìn từ Trái Đất (bán cầu Bắc)',px,py+pr+36);
+  const q=Math.min(14,W*.03);for(let k=0;k<8;k++){const xx=px-3.5*q*2.1+k*q*2.1,yy=H-60;drawPhase(xx,yy,q*.85,k*Math.PI/4,'#f1f5f9','#334155');if(k==i){cx.strokeStyle=col('--acc2');cx.lineWidth=2;cx.beginPath();cx.arc(xx,yy,q*.85+3,0,7);cx.stroke()}}cx.textAlign='left';HINT3()}});
+// camera presets for earlier 3D scenes
+Object.assign(EX.solar3d,{cam:[.7,.6]});Object.assign(EX.seasons,{cam:[.7,.6]});Object.keys(EX).forEach(k=>{if(k.startsWith('m-'))EX[k].cam=[.7,-.35]});
+
+// ===== Waves: string & spring (PhET-style numerical simulation) =====
+function waveEntry(long){const N=61,id=long?'springwave':'standing',self={};
+ const cfn=p=>long?p.L*Math.sqrt(p.k/.1):Math.sqrt(p.T/.05);
+ OPT[id]={mode:{l:'Chế độ',o:['Thủ công','Dao động','Xung']},end:{l:'Đầu bên phải',o:['Cố định','Tự do','Không có']},ruler:{l:'Thước đo',o:['Ẩn','Hiện']},ref:{l:'Đường chuẩn',o:['Ẩn','Hiện']},sw:{l:'Đồng hồ bấm giờ',o:['Ẩn','Hiện']}};
+ const clampv=(v,a)=>Math.max(-a,Math.min(a,v));
+ Object.assign(self,{name:long?'🌀 Sóng dừng trên lò xo':'🎸 Sóng dừng trên dây',live:true,sp0:.5,nog:true,cfn,
+ desc:long?'Lò xo là môi trường truyền <b>sóng dọc</b>: các vòng lò xo dao động dọc theo phương truyền sóng, tạo thành các vùng nén (đỏ đậm) và giãn (đỏ nhạt). Tốc độ sóng <code>v = L·√(k/m)</code> (m = 0,1 kg là khối lượng lò xo, k là độ cứng, L là chiều dài). Dao động ở tần số f tạo ra sóng có bước sóng <code>λ = {v|f}</code>; sóng tới và sóng phản xạ giao thoa tạo sóng dừng khi đầu cố định: <code>f = n·{v|2L}</code>; khi đầu tự do: <code>f = (2n − 1)·{v|4L}</code>. Độ giãn dọc được phóng đại để dễ quan sát; hãy chỉnh tần số tới giá trị cộng hưởng.':'Sóng ngang truyền trên dây với tốc độ <code>v = √(T/μ)</code> (T là lực căng, μ = 0,05 kg/m) và bước sóng <code>λ = {v|f}</code>. Sóng tới giao thoa với sóng phản xạ ở đầu dây: đầu cố định cho sóng dừng khi <code>L = n·{λ|2}</code>, tức <code>f = n·{v|2L}</code>; đầu tự do cho <code>f = (2n − 1)·{v|4L}</code>; đầu \u201cKhông có\u201d hấp thụ hết sóng (không phản xạ). Điều chỉnh tần số, chiều dài, lực căng, biên độ và ma sát; nút (đứng yên) cách nhau λ/2. Phương dọc được phóng đại; chọn Thủ công để tự kéo đầu dây, Xung để bấm vào khung hình gửi một xung.',
+ params:[['mode','Chế độ',0,2,1,1],['end','Đầu bên phải',0,2,1,0],['A','Biên độ dao động (cm)',.2,3,.1,1],['f','Tần số dao động (Hz)',.5,12,.05,long?6.3:4.5],['damp','Ma sát (%)',0,100,1,20],long?['k','Độ cứng lò xo k (N/m)',.5,20,.5,4]:['T','Lực căng dây T (N)',.2,5,.1,1],['L','Chiều dài (m)',.5,2,.05,1],['ruler','Thước đo',0,1,1,0],['ref','Đường chuẩn',0,1,1,1],['sw','Đồng hồ bấm giờ',0,1,1,0]],
+ reset(p){return{t:0,y:new Array(N).fill(0),yp:new Array(N).fill(0),ph:0,pt:p.mode==2?0:-1,y0:0}},
+ step(s,p,dt){const c=cfn(p),dx=p.L/(N-1),g=.3+p.damp/100*12,ns=Math.max(1,Math.ceil(dt/(.9*dx/c))),h=dt/ns,C2=Math.pow(c*h/dx,2),Cr=c*h/dx;
+  for(let k=0;k<ns;k++){const y=s.y,yp=s.yp;s.t+=h;let y0;
+   if(p.mode==1){s.ph+=2*Math.PI*p.f*h;y0=p.A*Math.sin(s.ph)}
+   else if(p.mode==2){if(s.pt>=0){s.pt+=h;y0=s.pt<1/p.f?p.A*Math.sin(2*Math.PI*p.f*s.pt):0;if(s.pt>=1/p.f)s.pt=-1}else y0=0}
+   else{const tg=PTR.down&&mp?clampv(long?(mp[0]-WV.x0)/WV.pp:(WV.cy-mp[1])/WV.pp,long?5:8):0;y0=s.y0+(tg-s.y0)*Math.min(1,h*14)}
+   s.y0=y0;const yn=new Array(N);yn[0]=y0;for(let i=1;i<N-1;i++)yn[i]=2*y[i]-yp[i]+C2*(y[i+1]-2*y[i]+y[i-1])-g*h*(y[i]-yp[i]);
+   const e=p.end;yn[N-1]=e==0?0:e==1?2*y[N-1]-yp[N-1]+2*C2*(y[N-2]-y[N-1])-g*h*(y[N-1]-yp[N-1]):y[N-1]-Cr*(y[N-1]-y[N-2]);
+   s.yp=y;s.y=yn}
+  if(s.y.some(v=>!isFinite(v)||Math.abs(v)>500)){s.y.fill(0);s.yp.fill(0)}},
+ val:()=>0,
+ info(s,p){const c=cfn(p),lam=c/p.f,fb=c/(2*p.L),g=p.f/fb,res=p.end==0?g>=.9&&Math.abs(g-Math.round(g))<.06:p.end==1?Math.abs(g-Math.floor(g)-.5)<.06:false,nr=p.end==0?Math.max(1,Math.round(g))*fb:p.end==1?(Math.floor(g)+.5)*fb:NaN;
+  return[[long?'Tốc độ truyền sóng v = L√(k/m)':'Tốc độ truyền sóng v = √(T/μ)',f(c,2)+' m/s'],['Bước sóng λ = v/f',f(lam,2)+' m'],['Chu kỳ T = 1/f',f(1/p.f,2)+' s'],['Số bước sóng trên chiều dài',f(p.L/lam,2)],['Tần số cộng hưởng gần nhất',isFinite(nr)?f(Math.max(nr,p.end==1?fb/2:fb),2)+' Hz':'— (không phản xạ)'],['Trạng thái',p.end==2?'Sóng chỉ truyền một chiều':res?'Cộng hưởng – sóng dừng rõ':'Chưa cộng hưởng – sóng chồng chất'],['Thời gian',f(s.t,2)+' s']]},
+ draw(s,p){const mgn=Math.max(80,W*.12),x0=mgn,x1=W-mgn,cy=H*.4,pp=long?20:(H*.3)/6,FG=col('--fg'),u=Math.max(.6,Math.min(1,W/700));
+  WV.pp=pp;WV.cy=cy;WV.x0=x0;const Y=v=>cy-clampv(v*pp,H*.34),dxp=(x1-x0)/(N-1);
+  if(p.ref){cx.setLineDash([6,4]);ln(x0,cy,x1,cy,'#92400e',1.5);cx.setLineDash([])}
+  let X=i=>x0+dxp*i;
+  if(long){let mx=.01;for(let i=0;i<N-1;i++)mx=Math.max(mx,Math.abs(s.y[i+1]-s.y[i]));const tg=Math.min(22,.6*dxp/mx);WV.su=WV.su?WV.su+(tg-WV.su)*.15:tg;const su=WV.su;WV.pp=su;X=i=>x0+dxp*i+s.y[i]*su}
+  const wy=cy+H*.26,wr=Math.min(34,H*.08),ph=p.mode==1?s.ph:0,pin=[x0+wr*.62*Math.cos(ph),wy+wr*.62*Math.sin(ph)];
+  cx.fillStyle='#d1d5db';cx.strokeStyle=FG;cx.lineWidth=2;cx.beginPath();cx.arc(x0,wy,wr,0,7);cx.fill();cx.stroke();cx.fillStyle='#1f2937';cx.beginPath();cx.arc(pin[0],pin[1],5,0,7);cx.fill();cx.fillStyle=col('--mute');cx.beginPath();cx.arc(x0,wy,3,0,7);cx.fill();
+  const topY=long?cy+22:Y(s.y0),topX=long?X(0):x0;cx.fillStyle='#9ca3af';cx.fillRect(topX-4,topY,8,wy-topY-wr*.3);cx.strokeStyle=FG;cx.lineWidth=1;cx.strokeRect(topX-4,topY,8,wy-topY-wr*.3);
+  if(long){const bx=X(0);cx.fillStyle='#374151';cx.fillRect(bx-12,cy-26,12,52)}
+  if(!long){cx.strokeStyle='#7f1d1d';cx.lineWidth=1.5;cx.beginPath();for(let i=0;i<N;i++){i?cx.lineTo(X(i),Y(s.y[i])):cx.moveTo(X(i),Y(s.y[i]))}cx.stroke();for(let i=0;i<N;i++){const cy2=Y(s.y[i]);sph(X(i),cy2,(i%10==0?5.4:4.4)*u,i%10==0?'#7dd3fc':'#ef4444')}}
+  else{for(let i=0;i<N;i++){const dn=i>0&&i<N-1?1-(X(i+1)-X(i-1))/(2*dxp):0,t=Math.max(0,Math.min(1,.5+dn*1.6)),k='rgb('+Math.round(252-(252-153)*t)+','+Math.round(165-(165-27)*t)+','+Math.round(165-(165-27)*t)+')';cx.strokeStyle=k;cx.lineWidth=2.2;cx.beginPath();cx.ellipse(X(i),cy,2.4,17,0,0,7);cx.stroke();if(i%10==0){sph(X(i),cy,4.6*u,'#7dd3fc')}}
+   cx.strokeStyle='#b91c1c';cx.lineWidth=1.5;cx.beginPath();for(let i=1;i<N-1;i++){const dn=1-(X(i+1)-X(i-1))/(2*dxp),yy=cy+H*.2-dn*70;i>1?cx.lineTo(X(i),yy):cx.moveTo(X(i),yy)}cx.stroke();ln(x0,cy+H*.2,x1,cy+H*.2,col('--line'),1);cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.fillText('Mật độ vòng lò xo (lên: nén, xuống: giãn)',x0,cy+H*.2-52)}
+  if(p.end==0){cx.fillStyle='#111827';cx.fillRect(x1+4,cy-44,18,88);cx.fillRect(x1+4,cy-44,38,16);cx.fillRect(x1+4,cy+28,38,16);cx.fillStyle='#9ca3af';cx.fillRect(x1-6,cy-5,14,10)}
+  else if(p.end==1){ln(x1+6,cy-70,x1+6,cy+70,'#6b7280',4);cx.strokeStyle=FG;cx.lineWidth=2.5;cx.beginPath();cx.arc(x1+6,long?cy:Y(s.y[N-1]),8,0,7);cx.stroke()}
+  else{cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText('→ không phản xạ',x1+8,cy-8)}
+  if(p.ruler){const ry=H-34,n=10;ln(x0,ry,x1,ry,FG,2);cx.fillStyle=col('--mute');cx.font='11px system-ui';cx.textAlign='center';for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n;ln(x,ry,x,ry-(i%5?6:11),FG,1.5);if(i%5==0)cx.fillText(f(p.L*100*i/n,0)+' cm',x,ry+14)}cx.textAlign='left';if(!long)for(let v=-5;v<=5;v++){const y=cy-v*pp;ln(x1+50,y,x1+50+(v%5?5:10),y,FG,1.2);if(v%5==0)cx.fillText(v+' cm',x1+64,y+4)}}
+  if(p.sw){cx.fillStyle=col('--card');cx.fillRect(W/2-60,10,120,30);cx.strokeStyle=FG;cx.lineWidth=1.5;cx.strokeRect(W/2-60,10,120,30);cx.fillStyle=FG;cx.font='bold 15px system-ui';cx.textAlign='center';cx.fillText(f(s.t,2)+' s',W/2,31);cx.textAlign='left'}
+  cx.fillStyle=col('--mute');cx.font='12px system-ui';cx.fillText(p.mode==0?'Chế độ thủ công: kéo chuột '+(long?'sang trái/phải':'lên/xuống')+' để lắc đầu '+(long?'lò xo':'dây'):p.mode==2?'Bấm vào khung hình để gửi một xung':'Bộ dao động đang chạy ở '+f(p.f,2)+' Hz',10,H-12)}});
+ return self}
+EX.standing=waveEntry(false);EX.springwave=waveEntry(true);
+
 let key='proj',P={},S,run=true,speed=1,gh=[];
 function load(k){key=k;const e=EX[k];P={};
  $('#tabs').innerHTML=SUBJ[subOf(k)].ids.map(id=>`<button data-k='${id}' class='${id===k?'on':''}'>${EX[id].name}</button>`).join('');
@@ -1113,9 +1306,9 @@ function load(k){key=k;const e=EX[k];P={};
  $('#ctls').innerHTML='';
  e.params.forEach(([id,lab0,mn,mx,st,df])=>{P[id]=df;const op=(OPT[k]||{})[id],lab=op?op.l:lab0,sh=v=>op?op.o[v-mn]:f(v,st<1?2:0);const d=document.createElement('div');d.className='ctl';
   d.innerHTML=`<label>${sb(lab)}<b>${sb(sh(df))}</b></label><input type='range' min='${mn}' max='${mx}' step='${st}' value='${df}'>${op?`<div class='tk'>${op.o.map(t=>`<span>${sb(t)}</span>`).join('')}</div>`:''}`;const hl=v=>d.querySelectorAll('.tk span').forEach((q,i)=>{q.className=i==v-mn?'on':''});hl(df);
-  d.querySelector('input').oninput=ev=>{P[id]=+ev.target.value;d.querySelector('b').innerHTML=sb(sh(P[id]));hl(P[id]);reset()};
+  d.querySelector('input').oninput=ev=>{P[id]=+ev.target.value;d.querySelector('b').innerHTML=sb(sh(P[id]));hl(P[id]);if(!EX[key].live)reset()};
   $('#ctls').appendChild(d)});
- cv.style.touchAction=e.d3?'none':'';$('#desc').innerHTML=sb(fm(e.desc));gv.style.display=e.nog?'none':'block';reset()}
+ cv.style.touchAction=e.d3?'none':'';$('#tb3').hidden=!e.d3;if(e.d3)tbSet(e.cam);speed=e.sp0||1;$('#spd').value=String(speed);$('#desc').innerHTML=sb(fm(e.desc));gv.style.display=e.nog?'none':'block';reset()}
 function reset(){S=EX[key].reset(P);gh=[];S.lh=-1}
 function drawGraph(){const e=EX[key],x=gx;x.clearRect(0,0,W,GH);
  x.fillStyle=col('--bg');x.fillRect(0,0,W,GH);
@@ -1137,11 +1330,16 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;const e=EX[k
  $('#info').innerHTML=e.info(S,P).map(([a,b])=>`<div>${sb(a)}<b>${sb(b)}</b></div>`).join('');
  requestAnimationFrame(frame)}
 $('#run').onclick=()=>{run=!run;$('#run').textContent=run?'⏸ Tạm dừng':'▶ Tiếp tục'};
-$('#rst').onclick=reset;
+$('#rst').onclick=reset;$('#zi').onclick=()=>{TB.zoom=Math.min(5,TB.zoom*1.25)};$('#zo').onclick=()=>{TB.zoom=Math.max(.25,TB.zoom/1.25)};$('#zr').onclick=()=>{tbSet(EX[key].cam)};
 let mp=null;cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();mp=[e.clientX-r.left,e.clientY-r.top]});cv.addEventListener('pointerleave',()=>{mp=null});
-let drg=null;cv.addEventListener('pointerdown',e=>{if(EX[key]&&EX[key].d3){drg=[e.clientX,e.clientY];try{cv.setPointerCapture(e.pointerId)}catch(_){}}});
-cv.addEventListener('pointermove',e=>{if(drg){V3.yaw+=(e.clientX-drg[0])*.01;V3.pitch=Math.max(-1.4,Math.min(1.4,V3.pitch+(e.clientY-drg[1])*.01));drg=[e.clientX,e.clientY]}});
-cv.addEventListener('pointerup',()=>{drg=null});cv.addEventListener('pointercancel',()=>{drg=null});
+let drg=null;const ptrs=new Map();let pd0=0;
+cv.addEventListener('pointerdown',e=>{PTR.down=true;ptrs.set(e.pointerId,[e.clientX,e.clientY]);if(ptrs.size==2){const a=[...ptrs.values()];pd0=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])}if(EX[key]&&EX[key].d3){drg=[e.clientX,e.clientY];try{cv.setPointerCapture(e.pointerId)}catch(_){}}});
+cv.addEventListener('pointermove',e=>{if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,[e.clientX,e.clientY]);if(!(EX[key]&&EX[key].d3))return;
+ if(ptrs.size==2){const a=[...ptrs.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);if(pd0>0)TB.zoom=Math.max(.25,Math.min(5,TB.zoom*d/pd0));pd0=d;return}
+ if(drg){const dx=e.clientX-drg[0],dy=e.clientY-drg[1];if(e.shiftKey||(e.buttons&2)){TB.px+=dx;TB.py+=dy}else tbRot(dx,dy);drg=[e.clientX,e.clientY]}});
+cv.addEventListener('wheel',e=>{if(EX[key]&&EX[key].d3){e.preventDefault();TB.zoom=Math.max(.25,Math.min(5,TB.zoom*Math.exp(-e.deltaY*.0015)))}},{passive:false});
+cv.addEventListener('dblclick',()=>{if(EX[key]&&EX[key].d3)tbSet(EX[key].cam)});cv.addEventListener('contextmenu',e=>{if(EX[key]&&EX[key].d3)e.preventDefault()});
+const pup=e=>{PTR.down=false;drg=null;ptrs.delete(e.pointerId);pd0=0};cv.addEventListener('pointerup',pup);cv.addEventListener('pointercancel',pup);
 const SY='H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ');
 const NM='Hiđro,Heli,Liti,Beri,Bo,Cacbon,Nitơ,Oxi,Flo,Neon,Natri,Magie,Nhôm,Silic,Photpho,Lưu huỳnh,Clo,Argon,Kali,Canxi,Scandi,Titan,Vanađi,Crom,Mangan,Sắt,Coban,Niken,Đồng,Kẽm,Gali,Gecmani,Asen,Selen,Brom,Krypton,Rubidi,Stronti,Ytri,Zirconi,Niobi,Molipđen,Tecneti,Rutheni,Rođi,Paladi,Bạc,Cadimi,Indi,Thiếc,Antimon,Telu,Iot,Xenon,Xesi,Bari,Lantan,Xeri,Praseođim,Neođim,Prometi,Samari,Europi,Gađolini,Tecbi,Dysprosi,Honmi,Ecbi,Tuli,Ytecbi,Luteti,Hafni,Tantan,Vonfram,Reni,Osmi,Iriđi,Platin,Vàng,Thủy ngân,Tali,Chì,Bitmut,Poloni,Atatin,Radon,Franxi,Rađi,Actini,Thori,Protactini,Urani,Neptuni,Plutoni,Americi,Curi,Beckeli,Californi,Einsteini,Fermi,Mendelevi,Nobeli,Lawrenci,Rutherfordi,Dubni,Seaborgi,Bohri,Hassi,Meitneri,Darmstadti,Roentgeni,Copernixi,Nihoni,Flerovi,Moscovi,Livermori,Tennessin,Oganesson'.split(',');
 const MS='1.008 4.0026 6.94 9.0122 10.81 12.011 14.007 15.999 18.998 20.180 22.990 24.305 26.982 28.085 30.974 32.06 35.45 39.948 39.098 40.078 44.956 47.867 50.942 51.996 54.938 55.845 58.933 58.693 63.546 65.38 69.723 72.630 74.922 78.971 79.904 83.798 85.468 87.62 88.906 91.224 92.906 95.95 98 101.07 102.906 106.42 107.868 112.414 114.818 118.710 121.760 127.60 126.904 131.293 132.905 137.327 138.905 140.116 140.908 144.242 145 150.36 151.964 157.25 158.925 162.500 164.930 167.259 168.934 173.045 174.967 178.49 180.948 183.84 186.207 190.23 192.217 195.084 196.967 200.592 204.38 207.2 208.980 209 210 222 223 226 227 232.038 231.036 238.029 237 244 243 247 247 251 252 257 258 259 266 267 268 269 270 277 278 281 282 285 286 289 290 293 294 294'.split(' ').map(Number);
@@ -1159,11 +1357,11 @@ function econf(z){let r=z;const c=ORB.map(([o,k])=>{const t=Math.min(k,r);r-=t;r
  parts.sort((a,b)=>a[0][0]-b[0][0]||'spdf'.indexOf(a[0][1])-'spdf'.indexOf(b[0][1]));
  return(core?'['+core[0]+']':'')+parts.map(([o,k])=>o+[...String(k)].map(d=>SUPN[d]).join('')).join('')}
 Object.assign(OPT,{fric:{ramp:{l:'Lực kéo',o:['Giữ nguyên','Tăng dần tự động']}},bohr:{Z:{l:'Nguyên tử / ion giống hiđro',o:['H (Z = 1)','He⁺ (Z = 2)','Li²⁺ (Z = 3)']}},ruth:{mode:{l:'Mô hình nguyên tử',o:['Thomson','Rutherford']}},decay:{mode:{l:'Loại phân rã',o:['α','β⁻','γ']}},ptable:{mode:{l:'Tô màu theo',o:['Nhóm nguyên tố','Trạng thái']}}});
-cv.addEventListener('click',e=>{if(key=='ptable'&&PT.hit){const r=cv.getBoundingClientRect(),z=PT.hit(e.clientX-r.left,e.clientY-r.top);if(z)S.sel=z}});
+cv.addEventListener('click',e=>{if(key=='ptable'&&PT.hit){const r=cv.getBoundingClientRect(),z=PT.hit(e.clientX-r.left,e.clientY-r.top);if(z)S.sel=z}if((key=='standing'||key=='springwave')&&S&&S.pt<0)S.pt=0});
 $('#spd').onchange=e=>speed=+e.target.value;
 addEventListener('resize',()=>{if(inLab)fit()});
 const SUBJ={
- phy:{n:'Vật lý',h:'vat-ly',ic:'⚛️',d:'Cơ học, nhiệt học, điện học, quang học và từ trường.',groups:[['Cơ học',['proj','pend','spr','fric','incl','mom','energy']],['Nhiệt học',['gas','heat','boyle','charles']],['Điện học',['rc','ohm','rlc']],['Quang học',['snell','lens','young']],['Điện từ & từ trường',['magnet','current','ampere','balance','faraday','lorentz']],['Vật lý hạt nhân',['decay']],['Thiên văn',['solar3d','earthmoon','eclipse','tide','seasons','daynight']],['Sóng cơ',['standing']]]},
+ phy:{n:'Vật lý',h:'vat-ly',ic:'⚛️',d:'Cơ học, nhiệt học, điện học, quang học và từ trường.',groups:[['Cơ học',['proj','pend','spr','fric','incl','mom','energy']],['Nhiệt học',['gas','heat','boyle','charles']],['Điện học',['rc','ohm','rlc']],['Quang học',['snell','lens','young']],['Điện từ & từ trường',['magnet','current','ampere','balance','faraday','lorentz']],['Vật lý hạt nhân',['decay']],['Thiên văn',['solar3d','earthmoon','eclipse','tide','seasons','daynight']],['Sóng cơ',['standing','springwave']]]},
  hoa:{n:'Hóa học',h:'hoa-hoc',ic:'🧪',d:'Chuẩn độ, tốc độ phản ứng, thang pH và chất chỉ thị.',groups:[['Dung dịch & phản ứng',['titr','rate','phs']],['Cấu tạo nguyên tử',['bohr','ruth','ptable']],['Điện hóa',['galv','electro']],['Cấu trúc phân tử – Hiđrocacbon',['m-metan','m-etan','m-eten','m-etin','m-benzen']],['Cấu trúc phân tử – Dẫn xuất chứa oxi',['m-metanol','m-etanol','m-phenol','m-metanal','m-etanal','m-axetic','m-este']],['Cấu trúc phân tử – Cacbohiđrat',['m-glucozo','m-fructozo','m-saccarozo','m-mantozo','m-tinhbot','m-xenlulozo']],['Cấu trúc phân tử – Hợp chất chứa nitơ',['m-metylamin','m-anilin','m-aminoaxit','m-peptit','m-protein']],['Cấu trúc tinh thể',['m-nacl','m-kimcuong','m-graphit']]]},
  sinh:{n:'Sinh học',h:'sinh-hoc',ic:'🌿',d:'Quang hợp, thẩm thấu, di truyền Mendel và quần thể.',groups:[['Tế bào & thực vật',['photo','osmo']],['Di truyền & quần thể',['mendel','lv','m-adn']],['Tiêu hóa & quang hợp tinh bột',['photostarch','digest']]]}};
 Object.values(SUBJ).forEach(s=>{s.ids=s.groups.flatMap(g=>g[1])});
@@ -1174,9 +1372,9 @@ const ART={
  sinh:`<svg viewBox='0 0 320 168' xmlns='http://www.w3.org/2000/svg'><defs><linearGradient id='gb' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#16a34a'/><stop offset='1' stop-color='#84cc16'/></linearGradient></defs><rect width='320' height='168' fill='url(#gb)'/><g fill='none' stroke='#fff' stroke-width='5' stroke-linecap='round'><path d='M120 14C220 46 100 122 200 154'/><path d='M200 14C100 46 220 122 120 154'/></g><g stroke='#fff' stroke-width='3' opacity='.7'><line x1='139' y1='28' x2='181' y2='28'/><line x1='147' y1='58' x2='173' y2='58'/><line x1='147' y1='110' x2='173' y2='110'/><line x1='139' y1='140' x2='181' y2='140'/></g></svg>`};
 let inLab=false;const TC={};
 const dsc=k=>{const t=EX[k].desc.replace(/<[^>]+>/g,'');return t.length>88?t.slice(0,85)+'…':t};
-function thumb(k){const kk=k+col('--bg');if(TC[kk])return TC[kk];const e=EX[k],c=document.createElement('canvas');c.width=640;c.height=336;c.className='th';const o=[cx,W,H,mp];cx=c.getContext('2d');W=640;H=336;mp=null;
- try{const p={};e.params.forEach(a=>{p[a[0]]=a[5]});const s=e.reset(p),n={peptit:240,seasons:300,galv:480,electro:1200,photostarch:3000,digest:2400,earthmoon:600,tide:800,standing:300,ruth:1500,decay:1200,energy:300,fric:2400,mom:700,incl:200,bohr:700,ampere:400,balance:480,heat:1200,rc:360,faraday:100,pend:150,proj:150,lorentz:250,titr:5800,lv:600,photo:600,osmo:1500,rate:480,mendel:1200}[k]||240;for(let i=0;i<n;i++)e.step(s,p,1/240);cx.fillStyle=col('--card');cx.fillRect(0,0,W,H);e.draw(s,p)}catch(err){}
- cx=o[0];W=o[1];H=o[2];mp=o[3];return TC[kk]=c}
+function thumb(k){const kk=k+col('--bg');if(TC[kk])return TC[kk];const e=EX[k],c=document.createElement('canvas');c.width=640;c.height=336;c.className='th';const o=[cx,W,H,mp],tb0=JSON.stringify(TB);cx=c.getContext('2d');W=640;H=336;mp=null;tbSet(e.cam);
+ try{const p={};e.params.forEach(a=>{p[a[0]]=a[5]});const s=e.reset(p),n={standing:700,springwave:700,gas:300,boyle:300,charles:300,peptit:240,seasons:300,galv:480,electro:1200,photostarch:3000,digest:2400,earthmoon:600,tide:800,standing:300,ruth:1500,decay:1200,energy:300,fric:2400,mom:700,incl:200,bohr:700,ampere:400,balance:480,heat:1200,rc:360,faraday:100,pend:150,proj:150,lorentz:250,titr:5800,lv:600,photo:600,osmo:1500,rate:480,mendel:1200}[k]||240;for(let i=0;i<n;i++)e.step(s,p,1/240);cx.fillStyle=col('--card');cx.fillRect(0,0,W,H);e.draw(s,p)}catch(err){}
+ cx=o[0];W=o[1];H=o[2];mp=o[3];Object.assign(TB,JSON.parse(tb0));return TC[kk]=c}
 function renderHome(){$('#homeCards').innerHTML=Object.keys(SUBJ).map(id=>{const s=SUBJ[id];return`<a class='sc' href='#${s.h}'>${ART[id]}<div class='tx'><h3>${s.ic} ${s.n}</h3><p>${s.d}</p><p><b>${s.ids.length} thí nghiệm</b></p></div></a>`}).join('')}
 function renderSub(id){const s=SUBJ[id],b=$('#subBody');$('#subCrumb').innerHTML=`<a href='#home'>Trang chủ</a> › ${s.n}`;b.innerHTML=`<h1>${s.ic} Thí nghiệm ${s.n}</h1><p class='sub'>${s.d} Chọn một thí nghiệm để vào trang mô phỏng.</p>`;
  s.groups.forEach(([g,ids])=>{const h=document.createElement('h2');h.className='grp';h.textContent=g;b.appendChild(h);const d=document.createElement('div');d.className='cards';
